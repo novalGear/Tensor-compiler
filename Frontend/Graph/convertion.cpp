@@ -1,4 +1,5 @@
 #include "graph.hpp"
+#include "graph_gen_parser.inl"
 
 #include <fstream>
 #include <iostream>
@@ -8,9 +9,9 @@
 namespace tcc {
 
 std::unique_ptr<ComputeGraph> ComputeGraph::load_from_onnx(const std::string& filepath) {
-
     onnx::ModelProto model;
     std::cout << "[Info] Loading ONNX model from: " << filepath << std::endl;
+
     if (!read_from_onnx_proto(filepath, model)) {
         std::cerr << "[Error] Failed to read ONNX file." << std::endl;
         return nullptr;
@@ -52,12 +53,12 @@ std::unique_ptr<ComputeGraph> ComputeGraph::convertion(const onnx::ModelProto& m
 // ================================================================================================//
 
 
-// TODO: чисто нейросеть писала
 void ComputeGraph::register_graph_inputs(const onnx::GraphProto& gp) {
     for (const auto& input : gp.input()) {
         TensorDescription desc;
         desc.producer_node_id = NO_PRODUCER;
         desc.is_graph_input = true;
+
         if (input.type().has_tensor_type()) {
             const auto& shape = input.type().tensor_type().shape();
             for (int i = 0; i < shape.dim_size(); ++i) {
@@ -69,17 +70,19 @@ void ComputeGraph::register_graph_inputs(const onnx::GraphProto& gp) {
     }
 }
 
-// TODO: чисто нейросеть писала
 void ComputeGraph::register_initializers(const onnx::GraphProto& gp) {
     for (const auto& init : gp.initializer()) {
         TensorDescription desc;
         // desc.is_initializer = true;
-        for (auto dim : init.dims()) desc.dimensions.push_back(static_cast<size_t>(dim));
-
+        for (auto dim : init.dims()) {
+            desc.dimensions.push_back(static_cast<size_t>(dim));
+        }
         auto it = tensor_map.find(init.name());
         if (it != tensor_map.end()) {
             // it->second.is_initializer = true;
-            if (!desc.dimensions.empty()) it->second.dimensions = desc.dimensions;
+            if (!desc.dimensions.empty()) {
+                it->second.dimensions = desc.dimensions;
+            }
         } else {
             tensor_map[init.name()] = desc;
         }
@@ -91,77 +94,45 @@ void ComputeGraph::build_nodes(const onnx::GraphProto& gp) {
         const auto& node_proto = gp.node(i);
         const std::string& op_type = node_proto.op_type();
 
-        std::optional<ComputeNode> created_node; // Используем optional для временного хранения
-
-        // Простая и явная логика создания
-        if (op_type == "Add") {
-            AddNode n(node_proto.name());
-            n.load_from_proto(node_proto);
-            created_node = ComputeNode(std::move(n));
-        }
-        else if (op_type == "Mul") {
-            MulNode n(node_proto.name());
-            n.load_from_proto(node_proto);
-            created_node = ComputeNode(std::move(n));
-        }
-        else if (op_type == "Relu") {
-            ReluNode n(node_proto.name());
-            n.load_from_proto(node_proto);
-            created_node = ComputeNode(std::move(n));
-        }
-        else if (op_type == "MatMul") {
-            MatmulNode n(node_proto.name());
-            n.load_from_proto(node_proto);
-            created_node = ComputeNode(std::move(n));
-        }
-        else if (op_type == "Gemm") {
-            GemmNode n(node_proto.name());
-            n.load_from_proto(node_proto);
-            created_node = ComputeNode(std::move(n));
-        }
-        else if (op_type == "Conv") {
-            ConvNode n(node_proto.name());
-            n.load_from_proto(node_proto);
-            created_node = ComputeNode(std::move(n));
-        }
-        else {
-            std::cerr << "[Warning] Unsupported op: " << op_type
-                      << " (" << node_proto.name() << "). Skipping." << std::endl;
-            continue;
-        }
-
-        // Добавляем узел в граф
+        ComputeNode node = create_node_from_proto(node_proto);
         NodeID current_id = nodes.size();
-        nodes.push_back(std::move(*created_node));
+        nodes.push_back(std::move(node));
 
-        // Обновляем связи
         update_tensor_connections(current_id, nodes.back());
     }
 }
 
-// TODO: это как вообще работает???
 void ComputeGraph::update_tensor_connections(NodeID node_id, const ComputeNode& node) {
+    // Лямбда для обхода variant
     auto process = [&](const auto& n) {
-        // Producer для выходов
+        // 1. Узел является производителем (producer) для своих выходов
         for (const auto& out : n.output_tensors) {
+            // Если тензора еще нет в карте (редкий случай, но возможный), создаем запись
+            if (tensor_map.find(out) == tensor_map.end()) {
+                tensor_map[out] = TensorDescription();
+            }
             tensor_map[out].producer_node_id = node_id;
         }
-        // Consumer для входов
+
+        // 2. Узел является потребителем (consumer) для своих входов
         for (const auto& in : n.input_tensors) {
             if (tensor_map.find(in) == tensor_map.end()) {
-                tensor_map[in] = TensorDescription(); // Неявный вход
+                // Неявный вход (например, константа, не попавшая в initializers, или ошибка модели)
+                tensor_map[in] = TensorDescription();
+                tensor_map[in].producer_node_id = NO_PRODUCER;
             }
             tensor_map[in].consumer_node_ids.push_back(node_id);
         }
     };
+
     std::visit(process, node);
 }
 
-// TODO: полностью нейронка писала
 void ComputeGraph::fill_tensor_shapes(const onnx::GraphProto& gp) {
     for (const auto& vi : gp.value_info()) {
         auto it = tensor_map.find(vi.name());
-        // Заполняем только если размеры еще не известны и запись существует
+
+        // Заполняем размеры только если они еще неизвестны
         if (it != tensor_map.end() && it->second.dimensions.empty()) {
              if (vi.type().has_tensor_type()) {
                  const auto& shape = vi.type().tensor_type().shape();

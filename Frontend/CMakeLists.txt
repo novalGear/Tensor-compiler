@@ -80,7 +80,7 @@ target_link_libraries(onnx_proto_lib PUBLIC
 
 set(FRONTEND_SOURCES
     main.cpp
-    # Graph/graph.cpp
+    Graph/graph_utils.cpp
     Graph/graph_utils.cpp
     Graph/convertion.cpp
     Graph/load_from_proto.cpp

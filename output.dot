@@ -1,0 +1,18 @@
+digraph Model {
+  rankdir=TB;
+  node [shape=box, style=filled, fillcolor=lightblue, fontname="Arial"];
+  edge [fontname="Arial", fontsize=10];
+
+  n0 [label="Unknown\nn0"];
+  n1 [label="Unknown\nn1"];
+  n2 [label="MatMul\nn2"];
+  n3 [label="Add\nn3"];
+  n4 [label="Relu\nn4"];
+
+  "X" [shape=ellipse, style=dashed, fillcolor=white, label="X"];
+  "X" -> n2 [label="X"];
+  n0 -> n2 [label="W"];
+  n2 -> n3 [label="matmul_res"];
+  n1 -> n3 [label="B"];
+  n3 -> n4 [label="add_res"];
+}
