@@ -9,6 +9,7 @@
 ```bash
 sudo apt update
 sudo apt install -y build-essential cmake git protobuf-compiler libprotobuf-dev pkg-config
+sudo apt install ruby
 ```
 
 ## Сборка проекта
