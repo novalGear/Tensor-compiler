@@ -1,11 +1,5 @@
 # Tensor-compiler
 
-1) нейронку на питоне накидать и сохранить в onnx
-2) Portobuf разобраться, получить представление нейронки
-3) написать свой граф, с поддержкой операций
-4) конвертация из обычного представления в наше
-5) graphviz визуализация графа
-
 ## Зависимости
 
 Для сборки проекта требуется компилятор C++17, система сборки CMake и библиотеки Protobuf.
@@ -32,9 +26,28 @@ make -j10
 ./build/Frontend/frontend ./data/test_model.onnx
 ```
 
-## TODO:
-- наследование -> аргумент в виде std::variant
-- валидация построения графа (строить граф по Protobuf графу и сравнивать)?
-- нормальный вывод в dot с паарметрами узла
-- доки на код
-- побольше тестовых нейронок
+или указывая путь к другому .onnx в качестве аргумента
+
+## Frontend: структура проекта
+
+Типы узлов описываются в 'Frontend/ops_def.json', в следующем формате:
+
+```json
+  {
+    "op_type":  "Conv",
+    "cpp_name": "ConvNode",
+    "attributes": [
+      { "name": "strides",      "type": "std::vector<int64_t>", "default": "{1}"    },
+      { "name": "pads",         "type": "std::vector<int64_t>", "default": "{0}"    },
+      { "name": "dilations",    "type": "std::vector<int64_t>", "default": "{1}"    },
+      { "name": "group",        "type": "int64_t",              "default": "1"      }
+    ]
+  },
+```
+
+Скрипт `Frontend/generate_nodes.rb` генерирует по данному описанию:
+- `Frontend/Graph/graph_gen.hpp`: описание структур узлов
+- `Frontend/Graph/graph_gen_parser.inl`: функции конвертации для каждого типа узла
+- `Frontend/Graph/graph_gen_utils.inl`: функции для вывода в dot для каждого типа узла
+
+Описание графа и тензоров находятся в `graph.hpp`, реализации методов в `convertion.cpp`
