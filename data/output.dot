@@ -1,0 +1,37 @@
+digraph Model {
+  rankdir=TB;
+  bgcolor="white";
+  node [shape=record, style="rounded,filled", fontname="Arial", fontsize=10, margin=0.1];
+  edge [fontname="Arial", fontsize=9, arrowsize=0.7];
+
+  n0 [label="{ Conv | name: \"/conv_layer/Conv\" | strides: [2, 2] | pads: [1, 1, 1, 1] | dilations: [1, 1] | group: 1 }", fillcolor="#E0F7FA"];
+  n1 [label="{ Relu | name: \"/relu_layer/Relu\" }", fillcolor="#FFF3E0"];
+  n2 [label="{ Flatten | name: \"/Flatten\" | axis: 1 }", fillcolor="#EEEEEE"];
+  n3 [label="{ Gemm | name: \"/linear_layer/Gemm\" | transposeA: false | transposeB: false | alpha: 1 | beta: 1 }", fillcolor="#EFEBE9"];
+  n4 [label="{ MatMul | name: \"/MatMul\" }", fillcolor="#F3E5F5"];
+  n5 [label="{ Add | name: \"/Add\" }", fillcolor="#E3F2FD"];
+  n6 [label="{ Mul | name: \"/Mul\" }", fillcolor="#E8F5E9"];
+
+  "input_tensor" [shape=ellipse, style=dashed, fillcolor="white", label="input_tensor"];
+  "input_tensor" -> n0 [label="input_tensor"];
+  "conv_layer.weight" [shape=ellipse, style=dashed, fillcolor="white", label="conv_layer.weight"];
+  "conv_layer.weight" -> n0 [label="conv_layer.weight"];
+  "conv_layer.bias" [shape=ellipse, style=dashed, fillcolor="white", label="conv_layer.bias"];
+  "conv_layer.bias" -> n0 [label="conv_layer.bias"];
+  n0 -> n1 [label="/conv_layer/Conv_output_0"];
+  n1 -> n2 [label="/relu_layer/Relu_output_0"];
+  n2 -> n3 [label="/Flatten_output_0"];
+  "linear_layer.weight" [shape=ellipse, style=dashed, fillcolor="white", label="linear_layer.weight"];
+  "linear_layer.weight" -> n3 [label="linear_layer.weight"];
+  "linear_layer.bias" [shape=ellipse, style=dashed, fillcolor="white", label="linear_layer.bias"];
+  "linear_layer.bias" -> n3 [label="linear_layer.bias"];
+  n3 -> n4 [label="/linear_layer/Gemm_output_0"];
+  "matmul_weight" [shape=ellipse, style=dashed, fillcolor="white", label="matmul_weight"];
+  "matmul_weight" -> n4 [label="matmul_weight"];
+  n4 -> n5 [label="/MatMul_output_0"];
+  "add_bias" [shape=ellipse, style=dashed, fillcolor="white", label="add_bias"];
+  "add_bias" -> n5 [label="add_bias"];
+  n5 -> n6 [label="/Add_output_0"];
+  "mul_scale" [shape=ellipse, style=dashed, fillcolor="white", label="mul_scale"];
+  "mul_scale" -> n6 [label="mul_scale"];
+}

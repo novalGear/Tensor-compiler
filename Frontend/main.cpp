@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     std::cout << "  Tensors: " << graph->tensor_map.size() << std::endl;
 
     // 3. Дамп в DOT
-    tcc::save_dot(*graph, "output.dot");
+    tcc::save_dot(*graph, "data/output.dot");
 
     std::cout << "\nTo visualize, run:" << std::endl;
     std::cout << "  dot -Tpng output.dot -o graph.png && xdg-open graph.png" << std::endl;

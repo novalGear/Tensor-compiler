@@ -1,6 +1,6 @@
 #pragma once
 
-#include "onnx/onnx.pb.h"
+#include "onnx/onnx-ml.pb.h"
 // Подключаем сгенерированные структуры и variant
 #include "graph_gen.hpp"
 

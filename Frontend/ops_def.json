@@ -54,5 +54,18 @@
       { "name": "dilations", "type": "std::vector<int64_t>", "default": "{1}" },
       { "name": "group", "type": "int64_t", "default": "1" }
     ]
+  },
+    {
+    "op_type": "Flatten",
+    "cpp_name": "FlattenNode",
+    "description": "Flattens the input tensor into a 2D matrix.",
+    "attributes": [
+      {
+        "name": "axis",
+        "type": "int64_t",
+        "default": "1",
+        "description": "Indicates up to which input dimensions (exclusive) should be flattened to the outer dimension of the output."
+      }
+    ]
   }
 ]
