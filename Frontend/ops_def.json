@@ -1,0 +1,71 @@
+[
+  {
+    "op_type": "CommonFields",
+    "description": "Common fields for all node types.",
+    "fields": [
+      { "name": "name", "type": "std::string", "default": "\"\"" },
+      { "name": "input_tensors", "type": "std::vector<std::string>", "default": "{}" },
+      { "name": "output_tensors", "type": "std::vector<std::string>", "default": "{}" }
+    ]
+  },
+  {
+    "op_type": "Constant",
+    "cpp_name": "ConstantNode",
+    "attributes": [
+      { "name": "value", "type": "std::vector<float>", "default": "{}" }
+    ]
+  },
+  {
+    "op_type": "Add",
+    "cpp_name": "AddNode",
+    "attributes": []
+  },
+  {
+    "op_type": "Mul",
+    "cpp_name": "MulNode",
+    "attributes": []
+  },
+  {
+    "op_type": "Relu",
+    "cpp_name": "ReluNode",
+    "attributes": []
+  },
+  {
+    "op_type": "MatMul",
+    "cpp_name": "MatmulNode",
+    "attributes": []
+  },
+  {
+    "op_type": "Gemm",
+    "cpp_name": "GemmNode",
+    "attributes": [
+      { "name": "transposeA", "type": "bool", "default": "false" },
+      { "name": "transposeB", "type": "bool", "default": "false" },
+      { "name": "alpha", "type": "float", "default": "1.0" },
+      { "name": "beta", "type": "float", "default": "1.0" }
+    ]
+  },
+  {
+    "op_type": "Conv",
+    "cpp_name": "ConvNode",
+    "attributes": [
+      { "name": "strides", "type": "std::vector<int64_t>", "default": "{1}" },
+      { "name": "pads", "type": "std::vector<int64_t>", "default": "{0}" },
+      { "name": "dilations", "type": "std::vector<int64_t>", "default": "{1}" },
+      { "name": "group", "type": "int64_t", "default": "1" }
+    ]
+  },
+    {
+    "op_type": "Flatten",
+    "cpp_name": "FlattenNode",
+    "description": "Flattens the input tensor into a 2D matrix.",
+    "attributes": [
+      {
+        "name": "axis",
+        "type": "int64_t",
+        "default": "1",
+        "description": "Indicates up to which input dimensions (exclusive) should be flattened to the outer dimension of the output."
+      }
+    ]
+  }
+]
