@@ -1,5 +1,7 @@
 // MLIRGenerator.cpp
 
+
+#include "../Pipeline/MLIRPasses.hpp"
 #include "MLIRGenerator.hpp"
 #include "TypeConverter.hpp"
 #include "OperationEmitters/AddEmitter.hpp"
@@ -264,47 +266,33 @@ bool MLIRGenerator::emitNode(const ComputeGraph& graph, size_t nodeId, const Com
     }, node);
 }
 
-// Временная упрощенная версия generate
 bool MLIRGenerator::generate(const ComputeGraph& graph) {
-    std::cout << "[DEBUG] generate START\n";
-
-    pImpl->currentGraph = &graph;
-
-    std::cout << "[DEBUG] Creating main function...\n";
-    if (!createMainFunction(graph)) {
-        std::cerr << "createMainFunction failed\n";
-        return false;
-    }
-    std::cout << "[DEBUG] createMainFunction OK\n";
-
-    std::cout << "[DEBUG] Getting order...\n";
-    auto order = graph.topologicalSort();
-    std::cout << "[DEBUG] order size: " << order.size() << "\n";
-
-    std::cout << "[DEBUG] Emitting nodes...\n";
-    for (size_t nodeId : order) {
-        std::cout << "[DEBUG] Emitting node " << nodeId << "\n";
-        if (!emitNode(graph, nodeId, graph.nodes[nodeId])) {
-            std::cerr << "emitNode failed for node " << nodeId << "\n";
-            return false;
-        }
-    }
-    std::cout << "[DEBUG] emitNodes OK\n";
-
-    std::cout << "[DEBUG] Creating return...\n";
-    auto outputs = graph.collectOutputs();
-    if (!createFunctionReturn(outputs)) {
-        std::cerr << "createFunctionReturn failed\n";
-        return false;
-    }
-    std::cout << "[DEBUG] createFunctionReturn OK\n";
+    // ... существующий код до верификации ...
 
     if (mlir::failed(mlir::verify(*pImpl->module))) {
-        std::cerr << "Verification failed\n";
+        std::cerr << "Error: MLIR module verification failed\n";
         return false;
     }
 
-    std::cout << "[DEBUG] generate END\n";
+    // ============================================================
+    // НОВОЕ: Понижение MLIR до LLVM диалекта
+    // ============================================================
+    std::cout << "[DEBUG] Running lowering pipeline...\n";
+    MLIRPasses passes;
+    if (!passes.runLoweringPipeline(*pImpl->module)) {
+        std::cerr << "Error: Lowering pipeline failed\n";
+        return false;
+    }
+    std::cout << "[DEBUG] Lowering pipeline completed\n";
+
+    if (pImpl->config.printMLIR) {
+        printMLIRToStream(std::cout);
+    }
+
+    if (!pImpl->config.outputFile.empty()) {
+        saveMLIRToFile(pImpl->config.outputFile);
+    }
+
     return true;
 }
 

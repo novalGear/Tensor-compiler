@@ -12,27 +12,21 @@ set(MLIR_SOURCES
 
 add_library(tcc_mlir STATIC ${MLIR_SOURCES})
 
-# Добавляем пути к include файлам
 target_include_directories(tcc_mlir PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../..      # корень проекта
-    ${CMAKE_CURRENT_SOURCE_DIR}/../..      # для доступа к Frontend
-)
-
-# Отдельно добавляем путь к Graph папке (где graph.hpp)
-target_include_directories(tcc_mlir PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Frontend/Graph
+    ${CMAKE_CURRENT_SOURCE_DIR}/../..
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Frontend
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Frontend/Graph
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
 )
 
 target_link_libraries(tcc_mlir
     PRIVATE
     tcc_frontend
+    tcc_pipeline
     MLIRIR
     MLIRParser
-    MLIRDialect
     MLIRFuncDialect
     MLIRArithDialect
-    MLIRLinalgDialect
     MLIRTensorDialect
     MLIRPass
     LLVMSupport

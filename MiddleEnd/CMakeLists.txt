@@ -1,6 +1,7 @@
 # MiddleEnd/CMakeLists.txt
 
 add_subdirectory(MLIR)
+add_subdirectory(Pipeline)
 
 add_library(tcc_middleend INTERFACE)
 
