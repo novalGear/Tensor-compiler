@@ -22,7 +22,6 @@ set(GENERATED_FILES
 )
 
 # Правило генерации
-# CMake выполнит эту команду, если любой из файлов DEPENDS новее, чем файлы OUTPUT
 add_custom_command(
     OUTPUT ${GENERATED_FILES}
     COMMAND ruby ${GEN_SCRIPT}
@@ -36,7 +35,6 @@ add_custom_target(generate_node_code ALL
     DEPENDS ${GENERATED_FILES}
 )
 
-# Сообщаем CMake, что эти файлы сгенерированы (не искать их в исходниках при старте)
 set_source_files_properties(${GENERATED_FILES} PROPERTIES GENERATED TRUE)
 
 # ==============================================================================
@@ -45,7 +43,7 @@ set_source_files_properties(${GENERATED_FILES} PROPERTIES GENERATED TRUE)
 find_package(Protobuf REQUIRED)
 
 # ==============================================================================
-# 3. Работа с ONNX (Используем готовые цели FetchContent)
+# 3. Работа с ONNX (FetchContent)
 # ==============================================================================
 
 include(FetchContent)
@@ -61,9 +59,13 @@ set(BUILD_ONNX_PYTHON OFF CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(onnx)
 
-set(ONNX_GEN_PROTO_DIR "${onnx_BINARY_DIR}")
+message(STATUS "onnx_SOURCE_DIR: ${onnx_SOURCE_DIR}")
+message(STATUS "onnx_BINARY_DIR: ${onnx_BINARY_DIR}")
 
-# Файлы, которые реально сгенерировались (судя по твоему логу):
+set(ONNX_GEN_PROTO_DIR ${onnx_BINARY_DIR})
+message(STATUS "ONNX_GEN_PROTO_DIR: ${ONNX_GEN_PROTO_DIR}")
+
+# Файлы, которые генерируются
 set(ONNX_GENERATED_SRCS
     ${ONNX_GEN_PROTO_DIR}/onnx/onnx-ml.pb.cc
     ${ONNX_GEN_PROTO_DIR}/onnx/onnx-operators-ml.pb.cc
@@ -73,8 +75,8 @@ set(ONNX_GENERATED_SRCS
 add_library(onnx_proto_lib STATIC ${ONNX_GENERATED_SRCS})
 
 target_include_directories(onnx_proto_lib PUBLIC
-    ${ONNX_GEN_PROTO_DIR}       # Путь к сгенерированным .h файлам
-    ${onnx_SOURCE_DIR}          # Путь к исходникам (нужен для некоторых инклюдов)
+    ${ONNX_GEN_PROTO_DIR}
+    ${onnx_SOURCE_DIR}
     ${Protobuf_INCLUDE_DIRS}
 )
 
@@ -82,32 +84,41 @@ target_link_libraries(onnx_proto_lib PUBLIC
     ${Protobuf_LIBRARIES}
 )
 
+# Добавляем зависимость от генерации proto
+add_dependencies(onnx_proto_lib onnx_proto)
+
 # ==============================================================================
-# 5. Основной исполняемый файл
+# 4. Библиотека Frontend (вместо исполняемого файла)
 # ==============================================================================
 
 set(FRONTEND_SOURCES
-    main.cpp
     Graph/graph_utils.cpp
     Graph/convertion.cpp
 )
 
-add_executable(frontend ${FRONTEND_SOURCES})
-add_dependencies(frontend generate_node_code)
+add_library(tcc_frontend STATIC ${FRONTEND_SOURCES})
 
-target_include_directories(frontend PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/Graph
+add_dependencies(tcc_frontend generate_node_code)
+
+target_include_directories(tcc_frontend PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
-
-    ${onnx_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/Graph
+    ${ONNX_GEN_PROTO_DIR}
     ${onnx_SOURCE_DIR}
-
     ${Protobuf_INCLUDE_DIRS}
 )
 
-target_link_libraries(frontend PRIVATE
+target_link_libraries(tcc_frontend PRIVATE
     onnx_proto_lib
     ${Protobuf_LIBRARIES}
 )
 
-message(STATUS "Frontend configured. Protos generated in: ${ONNX_PROTO_OUTPUT_DIR}")
+# ==============================================================================
+# 5. Опционально: тестовый исполняемый файл (если нужен)
+# ==============================================================================
+
+# Если нужен отдельный тестовый бинарник для фронтенда:
+# add_executable(frontend_test main.cpp)
+# target_link_libraries(frontend_test PRIVATE tcc_frontend)
+
+message(STATUS "Frontend configured. Protos generated in: ${ONNX_GEN_PROTO_DIR}")

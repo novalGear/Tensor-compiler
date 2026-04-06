@@ -6,34 +6,34 @@
 
 ## Структура директорий
 
-MiddleEnd/
-│   ├── MLIR/
-│   │   ├── MLIRGenerator.h
-│   │   ├── MLIRGenerator.cpp
-│   │   ├── TypeConverter.h
-│   │   ├── TypeConverter.cpp
-│   │   └── OperationEmitters/
-│   │       ├── IOperationEmitter.h
-│   │       ├── AddEmitter.h
-│   │       ├── AddEmitter.cpp
-│   │       ├── MulEmitter.h
-│   │       ├── MulEmitter.cpp
-│   │       ├── ReluEmitter.h
-│   │       ├── ReluEmitter.cpp
-│   │       ├── MatMulEmitter.h
-│   │       ├── MatMulEmitter.cpp
-│   │       └── ConstantEmitter.h
-│   │       └── ConstantEmitter.cpp
-│   ├── Pipeline/
-│   │   ├── CompilePipeline.h
-│   │   ├── CompilePipeline.cpp
-│   │   ├── MLIRPasses.h
-│   │   └── MLIRPasses.cpp
-│   └── Target/
-│       ├── LLVMIRGenerator.h
-│       ├── LLVMIRGenerator.cpp
-│       ├── AssemblyGenerator.h
-│       └── AssemblyGenerator.cpp
+- [MiddleEnd](#middleend)
+  - [MLIR](#mlir)
+    - [MLIRGenerator.h](#mlirgeneratorh)
+    - [MLIRGenerator.cpp](#mlirgeneratorcpp)
+    - [TypeConverter.h](#typeconverterh)
+    - [TypeConverter.cpp](#typeconvertercpp)
+    - [OperationEmitters](#operationemitters)
+      - [IOperationEmitter.h](#ioperationemitterh)
+      - [AddEmitter.h](#addemitterh)
+      - [AddEmitter.cpp](#addemittercpp)
+      - [MulEmitter.h](#mulemitterh)
+      - [MulEmitter.cpp](#mulemittercpp)
+      - [ReluEmitter.h](#reluemitterh)
+      - [ReluEmitter.cpp](#reluemittercpp)
+      - [MatMulEmitter.h](#matmulemitterh)
+      - [MatMulEmitter.cpp](#matmulemittercpp)
+      - [ConstantEmitter.h](#constantemitterh)
+      - [ConstantEmitter.cpp](#constantemittercpp)
+  - [Pipeline](#pipeline)
+    - [CompilePipeline.h](#compilepipelineh)
+    - [CompilePipeline.cpp](#compilepipelinecpp)
+    - [MLIRPasses.h](#mlirpassesh)
+    - [MLIRPasses.cpp](#mlirpassescpp)
+  - [Target](#target)
+    - [LLVMIRGenerator.h](#llvmirgeneratorh)
+    - [LLVMIRGenerator.cpp](#llvmirgeneratorcpp)
+    - [AssemblyGenerator.h](#assemblygeneratorh)
+    - [AssemblyGenerator.cpp](#assemblygeneratorcpp)
 
 
 ## Компоненты и их ответственность

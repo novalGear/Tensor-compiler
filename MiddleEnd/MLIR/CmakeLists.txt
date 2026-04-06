@@ -1,0 +1,38 @@
+# MiddleEnd/MLIR/CMakeLists.txt
+
+set(MLIR_SOURCES
+    TypeConverter.cpp
+    MLIRGenerator.cpp
+    OperationEmitters/AddEmitter.cpp
+    OperationEmitters/MulEmitter.cpp
+    OperationEmitters/ConstantEmitter.cpp
+    OperationEmitters/ReLUEmitter.cpp
+    OperationEmitters/MatMulEmitter.cpp
+)
+
+add_library(tcc_mlir STATIC ${MLIR_SOURCES})
+
+# Добавляем пути к include файлам
+target_include_directories(tcc_mlir PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../..      # корень проекта
+    ${CMAKE_CURRENT_SOURCE_DIR}/../..      # для доступа к Frontend
+)
+
+# Отдельно добавляем путь к Graph папке (где graph.hpp)
+target_include_directories(tcc_mlir PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Frontend/Graph
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Frontend
+)
+
+target_link_libraries(tcc_mlir
+    PRIVATE
+    MLIRIR
+    MLIRParser
+    MLIRDialect
+    MLIRFuncDialect
+    MLIRArithDialect
+    MLIRLinalgDialect
+    MLIRTensorDialect
+    MLIRPass
+    LLVMSupport
+)
