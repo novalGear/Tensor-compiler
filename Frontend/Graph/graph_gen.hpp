@@ -30,7 +30,7 @@ struct MulNode {
     std::vector<std::string> output_tensors = {};
 };
 
-struct ReluNode {
+struct ReLUNode {
     std::string name = "";
     std::vector<std::string> input_tensors = {};
     std::vector<std::string> output_tensors = {};
@@ -72,6 +72,6 @@ struct FlattenNode {
     int64_t axis = 1;
 };
 
-using ComputeNode = std::variant<ConstantNode, AddNode, MulNode, ReluNode, MatmulNode, GemmNode, ConvNode, FlattenNode>;
+using ComputeNode = std::variant<ConstantNode, AddNode, MulNode, ReLUNode, MatmulNode, GemmNode, ConvNode, FlattenNode>;
 
 } // namespace tcc

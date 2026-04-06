@@ -21,7 +21,7 @@ inline std::string get_node_color(const std::string& op_type) {
     else if (op_type == "Constant") return "#FAFAFA";
     else if (op_type == "Add") return "#E3F2FD";
     else if (op_type == "Mul") return "#E8F5E9";
-    else if (op_type == "Relu") return "#FFF3E0";
+    else if (op_type == "ReLU") return "#FFF3E0";
     else if (op_type == "MatMul") return "#F3E5F5";
     else if (op_type == "Gemm") return "#EFEBE9";
     else if (op_type == "Conv") return "#E0F7FA";
@@ -36,7 +36,7 @@ inline std::string get_node_record_label(const ComputeNode& node) {
         if constexpr (std::is_same_v<T, ConstantNode>) return "Constant";
         else if constexpr (std::is_same_v<T, AddNode>) return "Add";
         else if constexpr (std::is_same_v<T, MulNode>) return "Mul";
-        else if constexpr (std::is_same_v<T, ReluNode>) return "Relu";
+        else if constexpr (std::is_same_v<T, ReLUNode>) return "ReLU";
         else if constexpr (std::is_same_v<T, MatmulNode>) return "MatMul";
         else if constexpr (std::is_same_v<T, GemmNode>) return "Gemm";
         else if constexpr (std::is_same_v<T, ConvNode>) return "Conv";
@@ -65,7 +65,7 @@ inline std::string get_node_record_label(const ComputeNode& node) {
             ss << " | ";
             if (!n.name.empty()) ss << "name: \\\"" << escape_record(n.name) << "\\\" | ";
         }
-        else if constexpr (std::is_same_v<T, ReluNode>) {
+        else if constexpr (std::is_same_v<T, ReLUNode>) {
             ss << " | ";
             if (!n.name.empty()) ss << "name: \\\"" << escape_record(n.name) << "\\\" | ";
         }

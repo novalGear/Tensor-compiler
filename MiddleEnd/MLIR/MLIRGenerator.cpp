@@ -1,4 +1,5 @@
 // MLIRGenerator.cpp
+
 #include "MLIRGenerator.hpp"
 #include "TypeConverter.hpp"
 #include "OperationEmitters/AddEmitter.hpp"
@@ -21,6 +22,8 @@
 #include <set>
 #include <algorithm>
 
+#include "graph.hpp"
+
 namespace tcc {
 namespace mlir_gen {
 
@@ -31,6 +34,7 @@ struct MLIRGenerator::Impl {
     mlir::func::FuncOp mainFunc;
     std::unordered_map<TensorID, mlir::Value> tensorMap;
     std::unique_ptr<TypeConverter> typeConverter;
+    const ComputeGraph* currentGraph = nullptr;
     Config config;
 
     // Эмиттеры
@@ -41,6 +45,14 @@ struct MLIRGenerator::Impl {
     std::unique_ptr<MatMulEmitter> matmulEmitter;
 
     Impl(const Config& cfg) : config(cfg), builder(&context) {
+        context.getOrLoadDialect<mlir::BuiltinDialect>();
+        context.getOrLoadDialect<mlir::func::FuncDialect>();
+        context.getOrLoadDialect<mlir::arith::ArithDialect>();
+        context.getOrLoadDialect<mlir::linalg::LinalgDialect>();
+        context.getOrLoadDialect<mlir::tensor::TensorDialect>();
+
+        module = mlir::ModuleOp::create(mlir::UnknownLoc::get(&context));
+        builder = mlir::OpBuilder(module->getBodyRegion());
         typeConverter = std::make_unique<TypeConverter>(&context);
     }
 };
@@ -51,21 +63,11 @@ MLIRGenerator::MLIRGenerator(const Config& cfg)
     initEmitters();
 }
 
-// Конструктор без параметров (использует Config по умолчанию)
-MLIRGenerator::MLIRGenerator()
-    : MLIRGenerator(Config()) {}
-
+MLIRGenerator::MLIRGenerator() : MLIRGenerator(Config()) {}
 MLIRGenerator::~MLIRGenerator() = default;
 
 void MLIRGenerator::initMLIRContext() {
-    pImpl->context.getOrLoadDialect<mlir::BuiltinDialect>();
-    pImpl->context.getOrLoadDialect<mlir::func::FuncDialect>();
-    pImpl->context.getOrLoadDialect<mlir::arith::ArithDialect>();
-    pImpl->context.getOrLoadDialect<mlir::linalg::LinalgDialect>();
-    pImpl->context.getOrLoadDialect<mlir::tensor::TensorDialect>();
-
-    pImpl->module = mlir::ModuleOp::create(mlir::UnknownLoc::get(&pImpl->context));
-    pImpl->builder = mlir::OpBuilder(pImpl->module->getBodyRegion());
+    // Диалекты уже загружены в конструкторе Impl
 }
 
 void MLIRGenerator::initEmitters() {
@@ -76,93 +78,25 @@ void MLIRGenerator::initEmitters() {
     pImpl->matmulEmitter = std::make_unique<MatMulEmitter>(pImpl->builder, pImpl->tensorMap);
 }
 
-std::vector<size_t> MLIRGenerator::topologicalSort(const ComputeGraph& graph) {
-    std::vector<std::vector<size_t>> dependencies(graph.nodes.size());
-    std::vector<int> inDegree(graph.nodes.size(), 0);
-
-    // Строим граф зависимостей
-    for (const auto& [tensorId, tensorDesc] : graph.tensor_map) {
-        if (tensorDesc.producer_node_id != NO_PRODUCER) {
-            for (NodeID consumerId : tensorDesc.consumer_node_ids) {
-                dependencies[tensorDesc.producer_node_id].push_back(consumerId);
-                inDegree[consumerId]++;
-            }
-        }
-    }
-
-    // Алгоритм Кана
-    std::queue<size_t> queue;
-    for (size_t i = 0; i < graph.nodes.size(); ++i) {
-        if (inDegree[i] == 0) {
-            queue.push(i);
-        }
-    }
-
-    std::vector<size_t> order;
-    while (!queue.empty()) {
-        size_t nodeId = queue.front();
-        queue.pop();
-        order.push_back(nodeId);
-
-        for (size_t dependentId : dependencies[nodeId]) {
-            inDegree[dependentId]--;
-            if (inDegree[dependentId] == 0) {
-                queue.push(dependentId);
-            }
-        }
-    }
-
-    if (order.size() != graph.nodes.size()) {
-        std::cerr << "Error: Graph contains a cycle!\n";
-        return {};
-    }
-
-    return order;
-}
-
-std::vector<TensorID> MLIRGenerator::collectGraphInputs(const ComputeGraph& graph) {
-    std::vector<TensorID> inputs;
-    for (const auto& [tensorId, tensorDesc] : graph.tensor_map) {
-        if (tensorDesc.is_graph_input && !tensorDesc.is_initializer) {
-            inputs.push_back(tensorId);
-        }
-    }
-    return inputs;
-}
-
-std::vector<TensorID> MLIRGenerator::collectGraphOutputs(const ComputeGraph& graph) {
-    std::vector<TensorID> outputs;
-    for (const auto& [tensorId, tensorDesc] : graph.tensor_map) {
-        if (tensorDesc.consumer_node_ids.empty() &&
-            !tensorDesc.is_graph_input &&
-            tensorDesc.producer_node_id != NO_PRODUCER) {
-            outputs.push_back(tensorId);
-        }
-    }
-    return outputs;
-}
-
-std::vector<size_t> MLIRGenerator::getTensorDims(const ComputeGraph& graph, const TensorID& tensorId) {
-    auto it = graph.tensor_map.find(tensorId);
-    if (it != graph.tensor_map.end()) {
-        return it->second.dimensions;
-    }
-    return {};
-}
-
-bool MLIRGenerator::createFunctionArguments(const std::vector<TensorID>& inputs) {
+bool MLIRGenerator::createFunctionArguments(const std::vector<TensorID>& inputs,
+                                             const std::vector<TensorID>& outputs) {
     auto loc = mlir::UnknownLoc::get(&pImpl->context);
 
     llvm::SmallVector<mlir::Type> argTypes;
     for (const auto& inputName : inputs) {
-        // Пока используем динамические размерности
-        auto tensorType = mlir::RankedTensorType::get(
-            {mlir::ShapedType::kDynamic},
-            pImpl->typeConverter->getElementType());
+        auto dims = pImpl->currentGraph->getTensorDims(inputName);  // <-- исправлено
+        auto tensorType = pImpl->typeConverter->toTensorType(dims);
         argTypes.push_back(tensorType);
     }
 
-    auto funcType = mlir::FunctionType::get(&pImpl->context, argTypes, {});
+    llvm::SmallVector<mlir::Type> returnTypes;
+    for (const auto& outputName : outputs) {
+        auto dims = pImpl->currentGraph->getTensorDims(outputName);  // <-- исправлено
+        auto tensorType = pImpl->typeConverter->toTensorType(dims);
+        returnTypes.push_back(tensorType);
+    }
+
+    auto funcType = mlir::FunctionType::get(&pImpl->context, argTypes, returnTypes);
 
     pImpl->mainFunc = pImpl->builder.create<mlir::func::FuncOp>(loc, "forward", funcType);
     pImpl->mainFunc.setPrivate();
@@ -173,7 +107,6 @@ bool MLIRGenerator::createFunctionArguments(const std::vector<TensorID>& inputs)
 
     pImpl->builder.setInsertionPointToStart(&block);
 
-    // Добавляем аргументы в карту тензоров
     for (size_t i = 0; i < inputs.size(); ++i) {
         mlir::Value arg = block.getArgument(i);
         pImpl->tensorMap[inputs[i]] = arg;
@@ -183,44 +116,82 @@ bool MLIRGenerator::createFunctionArguments(const std::vector<TensorID>& inputs)
 }
 
 bool MLIRGenerator::createFunctionReturn(const std::vector<TensorID>& outputs) {
+    std::cout << "[DEBUG] createFunctionReturn START, outputs=" << outputs.size() << "\n";
+
+    // Выводим содержимое tensorMap для отладки
+    std::cout << "[DEBUG] tensorMap contents:\n";
+    for (const auto& [name, val] : pImpl->tensorMap) {
+        std::cout << "    " << name << "\n";
+    }
+
     auto loc = mlir::UnknownLoc::get(&pImpl->context);
 
     llvm::SmallVector<mlir::Value> returnValues;
     for (const auto& outputName : outputs) {
         auto it = pImpl->tensorMap.find(outputName);
         if (it == pImpl->tensorMap.end()) {
-            std::cerr << "Error: Output tensor " << outputName << " not found\n";
+            std::cerr << "Error: Output tensor " << outputName << " not found in tensorMap\n";
             return false;
         }
         returnValues.push_back(it->second);
+        std::cout << "[DEBUG]   returning " << outputName << "\n";
     }
 
     pImpl->builder.create<mlir::func::ReturnOp>(loc, returnValues);
 
-    // Обновляем тип функции с учетом возвращаемых значений
-    auto funcType = mlir::FunctionType::get(&pImpl->context,
-        pImpl->mainFunc.getFunctionType().getInputs(),
-        llvm::SmallVector<mlir::Type>(returnValues.size(),
-            pImpl->typeConverter->getElementType()));
-    pImpl->mainFunc.setType(funcType);
-
+    std::cout << "[DEBUG] createFunctionReturn END\n";
     return true;
 }
 
 bool MLIRGenerator::createMainFunction(const ComputeGraph& graph) {
-    auto inputs = collectGraphInputs(graph);
-    auto outputs = collectGraphOutputs(graph);
+    std::cout << "[DEBUG] createMainFunction START\n";
 
-    if (!createFunctionArguments(inputs)) {
-        return false;
+    auto inputs = graph.collectInputs();
+    auto outputs = graph.collectOutputs();
+
+    std::cout << "[DEBUG] inputs: " << inputs.size() << ", outputs: " << outputs.size() << "\n";
+
+    auto loc = mlir::UnknownLoc::get(&pImpl->context);
+
+    // Создаем типы аргументов
+    llvm::SmallVector<mlir::Type> argTypes;
+    for (const auto& inputName : inputs) {
+        auto dims = graph.getTensorDims(inputName);
+        auto tensorType = pImpl->typeConverter->toTensorType(dims);
+        argTypes.push_back(tensorType);
+        std::cout << "[DEBUG] Input " << inputName << " dims: " << dims.size() << "\n";
     }
 
-    // Эмиттеры будут вставлены здесь
-
-    if (!createFunctionReturn(outputs)) {
-        return false;
+    // Создаем типы возвращаемых значений
+    llvm::SmallVector<mlir::Type> returnTypes;
+    for (const auto& outputName : outputs) {
+        auto dims = graph.getTensorDims(outputName);
+        auto tensorType = pImpl->typeConverter->toTensorType(dims);
+        returnTypes.push_back(tensorType);
+        std::cout << "[DEBUG] Output " << outputName << " dims: " << dims.size() << "\n";
     }
 
+    auto funcType = mlir::FunctionType::get(&pImpl->context, argTypes, returnTypes);
+
+    std::cout << "[DEBUG] Creating FuncOp...\n";
+    pImpl->mainFunc = pImpl->builder.create<mlir::func::FuncOp>(loc, "forward", funcType);
+    pImpl->mainFunc.setPrivate();
+
+    std::cout << "[DEBUG] Adding entry block...\n";
+    pImpl->mainFunc.addEntryBlock();
+
+    std::cout << "[DEBUG] Setting insertion point...\n";
+    pImpl->builder.setInsertionPointToStart(&pImpl->mainFunc.getBody().front());
+
+    // ВАЖНО: Добавляем входные тензоры в tensorMap
+    std::cout << "[DEBUG] Adding inputs to tensorMap...\n";
+    for (size_t i = 0; i < inputs.size(); ++i) {
+        mlir::Value arg = pImpl->mainFunc.getArgument(i);
+        pImpl->tensorMap[inputs[i]] = arg;
+        std::cout << "[DEBUG]   " << inputs[i] << " -> argument " << i << "\n";
+    }
+
+    std::cout << "[DEBUG] createMainFunction END\n";
     return true;
 }
 
@@ -240,27 +211,48 @@ bool MLIRGenerator::emitNode(const ComputeGraph& graph, size_t nodeId, const Com
 
         std::vector<std::vector<size_t>> outputDimsList;
         for (const auto& outputName : n.output_tensors) {
-            outputDimsList.push_back(getTensorDims(graph, outputName));
+            outputDimsList.push_back(graph.getTensorDims(outputName));
         }
 
-        if constexpr (std::is_same_v<T, AddNode>) {
-            if (inputs.size() != 2 || outputDimsList.empty()) return false;
+        if (outputDimsList.empty()) {
+            std::cerr << "Error: No output dimensions for node " << nodeId << "\n";
+            return false;
+        }
+
+        if constexpr (std::is_same_v<T, ConstantNode>) {
+            std::cout << "[DEBUG] Emitting ConstantNode\n";
+            pImpl->constantEmitter->emitConstant(n.value, n.output_tensors, outputDimsList[0]);
+        }
+        else if constexpr (std::is_same_v<T, AddNode>) {
+            std::cout << "[DEBUG] Emitting AddNode\n";
+            if (inputs.size() != 2) {
+                std::cerr << "AddNode requires 2 inputs, got " << inputs.size() << "\n";
+                return false;
+            }
             pImpl->addEmitter->emit(inputs, n.output_tensors, outputDimsList[0]);
         }
         else if constexpr (std::is_same_v<T, MulNode>) {
-            if (inputs.size() != 2 || outputDimsList.empty()) return false;
+            std::cout << "[DEBUG] Emitting MulNode\n";
+            if (inputs.size() != 2) {
+                std::cerr << "MulNode requires 2 inputs, got " << inputs.size() << "\n";
+                return false;
+            }
             pImpl->mulEmitter->emit(inputs, n.output_tensors, outputDimsList[0]);
         }
-        else if constexpr (std::is_same_v<T, ConstantNode>) {
-            if (outputDimsList.empty()) return false;
-            pImpl->constantEmitter->emit({}, n.output_tensors, outputDimsList[0]);
-        }
-        else if constexpr (std::is_same_v<T, ReluNode>) {
-            if (inputs.empty() || outputDimsList.empty()) return false;
+        else if constexpr (std::is_same_v<T, ReLUNode>) {
+            std::cout << "[DEBUG] Emitting ReluNode\n";
+            if (inputs.size() != 1) {
+                std::cerr << "ReluNode requires 1 input, got " << inputs.size() << "\n";
+                return false;
+            }
             pImpl->reluEmitter->emit(inputs, n.output_tensors, outputDimsList[0]);
         }
         else if constexpr (std::is_same_v<T, MatmulNode>) {
-            if (inputs.size() != 2 || outputDimsList.empty()) return false;
+            std::cout << "[DEBUG] Emitting MatmulNode\n";
+            if (inputs.size() != 2) {
+                std::cerr << "MatmulNode requires 2 inputs, got " << inputs.size() << "\n";
+                return false;
+            }
             pImpl->matmulEmitter->emit(inputs, n.output_tensors, outputDimsList[0]);
         }
         else {
@@ -272,38 +264,47 @@ bool MLIRGenerator::emitNode(const ComputeGraph& graph, size_t nodeId, const Com
     }, node);
 }
 
+// Временная упрощенная версия generate
 bool MLIRGenerator::generate(const ComputeGraph& graph) {
-    auto order = topologicalSort(graph);
-    if (order.empty()) {
-        std::cerr << "Error: Topological sort failed\n";
-        return false;
-    }
+    std::cout << "[DEBUG] generate START\n";
 
+    pImpl->currentGraph = &graph;
+
+    std::cout << "[DEBUG] Creating main function...\n";
     if (!createMainFunction(graph)) {
-        std::cerr << "Error: Failed to create main function\n";
+        std::cerr << "createMainFunction failed\n";
         return false;
     }
+    std::cout << "[DEBUG] createMainFunction OK\n";
 
+    std::cout << "[DEBUG] Getting order...\n";
+    auto order = graph.topologicalSort();
+    std::cout << "[DEBUG] order size: " << order.size() << "\n";
+
+    std::cout << "[DEBUG] Emitting nodes...\n";
     for (size_t nodeId : order) {
+        std::cout << "[DEBUG] Emitting node " << nodeId << "\n";
         if (!emitNode(graph, nodeId, graph.nodes[nodeId])) {
-            std::cerr << "Error: Failed to emit node " << nodeId << "\n";
+            std::cerr << "emitNode failed for node " << nodeId << "\n";
             return false;
         }
     }
+    std::cout << "[DEBUG] emitNodes OK\n";
+
+    std::cout << "[DEBUG] Creating return...\n";
+    auto outputs = graph.collectOutputs();
+    if (!createFunctionReturn(outputs)) {
+        std::cerr << "createFunctionReturn failed\n";
+        return false;
+    }
+    std::cout << "[DEBUG] createFunctionReturn OK\n";
 
     if (mlir::failed(mlir::verify(*pImpl->module))) {
-        std::cerr << "Error: MLIR module verification failed\n";
+        std::cerr << "Verification failed\n";
         return false;
     }
 
-    if (pImpl->config.printMLIR) {
-        printMLIRToStream(std::cout);
-    }
-
-    if (!pImpl->config.outputFile.empty()) {
-        saveMLIRToFile(pImpl->config.outputFile);
-    }
-
+    std::cout << "[DEBUG] generate END\n";
     return true;
 }
 
@@ -321,13 +322,14 @@ void MLIRGenerator::printMLIRToStream(std::ostream& os) {
 }
 
 bool MLIRGenerator::saveMLIRToFile(const std::string& filename) {
-    std::ofstream out(filename);
-    if (!out.is_open()) {
+    std::error_code ec;
+    llvm::raw_fd_ostream os(filename, ec);
+    if (ec) {
         std::cerr << "Cannot open file: " << filename << "\n";
         return false;
     }
-    printMLIRToStream(out);
-    out.close();
+    pImpl->module->print(os);
+    os.close();
     std::cout << "MLIR saved to: " << filename << "\n";
     return true;
 }

@@ -5,7 +5,7 @@ digraph Model {
   edge [fontname="Arial", fontsize=9, arrowsize=0.7];
 
   n0 [label="{ Conv | name: \"/conv_layer/Conv\" | strides: [2, 2] | pads: [1, 1, 1, 1] | dilations: [1, 1] | group: 1 }", fillcolor="#E0F7FA"];
-  n1 [label="{ Relu | name: \"/relu_layer/Relu\" }", fillcolor="#FFF3E0"];
+  n1 [label="{ ReLU | name: \"/ReLU_layer/ReLU\" }", fillcolor="#FFF3E0"];
   n2 [label="{ Flatten | name: \"/Flatten\" | axis: 1 }", fillcolor="#EEEEEE"];
   n3 [label="{ Gemm | name: \"/linear_layer/Gemm\" | transposeA: false | transposeB: false | alpha: 1 | beta: 1 }", fillcolor="#EFEBE9"];
   n4 [label="{ MatMul | name: \"/MatMul\" }", fillcolor="#F3E5F5"];
@@ -19,7 +19,7 @@ digraph Model {
   "conv_layer.bias" [shape=ellipse, style=dashed, fillcolor="white", label="conv_layer.bias"];
   "conv_layer.bias" -> n0 [label="conv_layer.bias"];
   n0 -> n1 [label="/conv_layer/Conv_output_0"];
-  n1 -> n2 [label="/relu_layer/Relu_output_0"];
+  n1 -> n2 [label="/ReLU_layer/ReLU_output_0"];
   n2 -> n3 [label="/Flatten_output_0"];
   "linear_layer.weight" [shape=ellipse, style=dashed, fillcolor="white", label="linear_layer.weight"];
   "linear_layer.weight" -> n3 [label="linear_layer.weight"];

@@ -9,6 +9,45 @@
 
 namespace tcc {
 
+// ================================================================
+// Сбор входных тензоров
+// ================================================================
+std::vector<TensorID> ComputeGraph::collectInputs() const {
+    std::vector<TensorID> inputs;
+    for (const auto& [tensorId, tensorDesc] : tensor_map) {
+        if (tensorDesc.is_graph_input && !tensorDesc.is_initializer) {
+            inputs.push_back(tensorId);
+        }
+    }
+    return inputs;
+}
+
+// ================================================================
+// Сбор выходных тензоров
+// ================================================================
+std::vector<TensorID> ComputeGraph::collectOutputs() const {
+    std::vector<TensorID> outputs;
+    for (const auto& [tensorId, tensorDesc] : tensor_map) {
+        if (tensorDesc.consumer_node_ids.empty() &&
+            !tensorDesc.is_graph_input &&
+            tensorDesc.producer_node_id != NO_PRODUCER) {
+            outputs.push_back(tensorId);
+        }
+    }
+    return outputs;
+}
+
+// ================================================================
+// Получение размерностей тензора
+// ================================================================
+std::vector<size_t> ComputeGraph::getTensorDims(const TensorID& tensorId) const {
+    auto it = tensor_map.find(tensorId);
+    if (it != tensor_map.end()) {
+        return it->second.dimensions;
+    }
+    return {};
+}
+
 void save_dot(const ComputeGraph& graph, const std::string& filename) {
     std::ofstream out(filename);
     if (!out.is_open()) {
@@ -31,7 +70,7 @@ void save_dot(const ComputeGraph& graph, const std::string& filename) {
             using T = std::decay_t<decltype(n)>;
             if constexpr (std::is_same_v<T, AddNode>) return "Add";
             if constexpr (std::is_same_v<T, MulNode>) return "Mul";
-            if constexpr (std::is_same_v<T, ReluNode>) return "Relu";
+            if constexpr (std::is_same_v<T, ReLUNode>) return "ReLU";
             if constexpr (std::is_same_v<T, MatmulNode>) return "MatMul";
             if constexpr (std::is_same_v<T, GemmNode>) return "Gemm";
             if constexpr (std::is_same_v<T, ConvNode>) return "Conv";

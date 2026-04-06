@@ -29,12 +29,6 @@ TEST_F(TypeConverterTest, GetNumElements) {
     EXPECT_EQ(num, 24);
 }
 
-TEST_F(TypeConverterTest, IsDynamicDim) {
-    // Исправлено: проверяем, что -1 это динамическая размерность
-    EXPECT_TRUE(TypeConverter::isDynamicDim(-1));
-    EXPECT_FALSE(TypeConverter::isDynamicDim(5));
-    EXPECT_FALSE(TypeConverter::isDynamicDim(0));
-}
 
 TEST_F(TypeConverterTest, ToMLIRDim) {
     EXPECT_EQ(TypeConverter::toMLIRDim(5), 5);

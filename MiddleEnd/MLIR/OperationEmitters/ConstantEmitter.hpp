@@ -1,4 +1,4 @@
-// ConstantEmitter.h
+// ConstantEmitter.hpp
 #pragma once
 
 #include "IOperationEmitter.hpp"
@@ -19,11 +19,15 @@ public:
                      const std::vector<std::string>& outputNames,
                      const std::vector<size_t>& outputDims) override;
 
+    // Переопределяем метод для констант с значениями
+    mlir::Value emitConstant(const std::vector<float>& values,
+                              const std::vector<std::string>& outputNames,
+                              const std::vector<size_t>& outputDims) override;
+
 private:
     mlir::OpBuilder& builder;
     std::unordered_map<std::string, mlir::Value>& tensorMap;
 
-    // Вспомогательные методы для создания константных тензоров
     mlir::Value createConstantTensor(const std::vector<float>& values,
                                       const std::vector<size_t>& dims);
     mlir::Value createConstantScalar(float value);

@@ -37,6 +37,15 @@ public:
 
     static std::unique_ptr<ComputeGraph> load_from_onnx(const std::string& filepath);
 
+    std::vector<size_t> topologicalSort() const;
+
+    // Сбор входных и выходных тензоров
+    std::vector<TensorID> collectInputs() const;
+    std::vector<TensorID> collectOutputs() const;
+
+    // Получение размерностей тензора
+    std::vector<size_t> getTensorDims(const TensorID& tensorId) const;
+
 private:
     static bool read_from_onnx_proto(const std::string& filepath, onnx::ModelProto& model_out);
     static std::unique_ptr<ComputeGraph> convertion(const onnx::ModelProto& model_proto);

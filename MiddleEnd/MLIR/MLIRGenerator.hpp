@@ -4,9 +4,11 @@
 #include "graph.hpp"
 #include "OperationEmitters/IOperationEmitter.hpp"
 #include "TypeConverter.hpp"
+
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/IR/OwningOpRef.h"
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -46,7 +48,8 @@ private:
     std::vector<TensorID> collectGraphInputs(const ComputeGraph& graph);
     std::vector<TensorID> collectGraphOutputs(const ComputeGraph& graph);
     std::vector<size_t> getTensorDims(const ComputeGraph& graph, const TensorID& tensorId);
-    bool createFunctionArguments(const std::vector<TensorID>& inputs);
+    bool createFunctionArguments(const std::vector<TensorID>& inputs,
+                                 const std::vector<TensorID>& outputs);
     bool createFunctionReturn(const std::vector<TensorID>& outputs);
     bool createMainFunction(const ComputeGraph& graph);
     bool emitNode(const ComputeGraph& graph, size_t nodeId, const ComputeNode& node);

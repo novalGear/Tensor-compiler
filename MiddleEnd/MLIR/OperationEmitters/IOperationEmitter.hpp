@@ -1,4 +1,4 @@
-// IOperationEmitter.h
+// IOperationEmitter.hpp
 #pragma once
 
 #include "mlir/IR/Value.h"
@@ -8,18 +8,22 @@
 namespace tcc {
 namespace mlir_gen {
 
-// Базовый интерфейс для всех эмиттеров операций
 class IOperationEmitter {
 public:
     virtual ~IOperationEmitter() = default;
 
     // Основной метод эмиттера
-    // inputs:    MLIR значения входных тензоров
-    // outputNames: имена выходных тензоров (из графа)
-    // outputDims: размерности выходных тензоров
     virtual mlir::Value emit(const std::vector<mlir::Value>& inputs,
                              const std::vector<std::string>& outputNames,
                              const std::vector<size_t>& outputDims) = 0;
+
+    // Специальный метод для констант (с значениями)
+    virtual mlir::Value emitConstant(const std::vector<float>& values,
+                                      const std::vector<std::string>& outputNames,
+                                      const std::vector<size_t>& outputDims) {
+        // Базовая реализация — вызвать обычный emit (будет переопределено в ConstantEmitter)
+        return emit({}, outputNames, outputDims);
+    }
 };
 
 } // namespace mlir_gen

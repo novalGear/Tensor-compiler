@@ -94,6 +94,7 @@ add_dependencies(onnx_proto_lib onnx_proto)
 set(FRONTEND_SOURCES
     Graph/graph_utils.cpp
     Graph/convertion.cpp
+    Graph/topological_sort.cpp
 )
 
 add_library(tcc_frontend STATIC ${FRONTEND_SOURCES})

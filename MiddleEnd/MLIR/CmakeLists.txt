@@ -26,6 +26,7 @@ target_include_directories(tcc_mlir PRIVATE
 
 target_link_libraries(tcc_mlir
     PRIVATE
+    tcc_frontend
     MLIRIR
     MLIRParser
     MLIRDialect

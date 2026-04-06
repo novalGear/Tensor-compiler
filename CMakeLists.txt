@@ -13,7 +13,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Автоматический поиск LLVM/MLIR в WSL типовых путях
 # ================================================================
 
-# Поиск доступных версий LLVM в WSL
 set(LLVM_VERSIONS 18 17 16 15 14)
 
 foreach(VER ${LLVM_VERSIONS})
@@ -25,11 +24,10 @@ foreach(VER ${LLVM_VERSIONS})
     endif()
 endforeach()
 
-# Стандартные пути WSL
 list(APPEND CMAKE_PREFIX_PATH
     "/usr/lib/llvm"
     "/usr/local/lib/llvm"
-    "/usr/lib/llvm-17/lib/cmake"  # явный путь для apt установки
+    "/usr/lib/llvm-17/lib/cmake"
 )
 
 # ================================================================
@@ -39,7 +37,6 @@ find_package(LLVM REQUIRED CONFIG)
 find_package(MLIR REQUIRED CONFIG)
 find_package(Protobuf REQUIRED)
 
-# Вывод найденных путей (для отладки)
 message(STATUS "LLVM_DIR: ${LLVM_DIR}")
 message(STATUS "MLIR_DIR: ${MLIR_DIR}")
 message(STATUS "Protobuf_DIR: ${Protobuf_DIR}")
@@ -59,6 +56,12 @@ add_subdirectory(Frontend)
 add_subdirectory(MiddleEnd)
 add_subdirectory(googletest)
 
+enable_testing()
+add_subdirectory(tests)
+
+# ================================================================
+# Глобальные пути для include
+# ================================================================
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/Frontend
     ${CMAKE_CURRENT_SOURCE_DIR}/Frontend/Graph
@@ -66,9 +69,6 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}/_deps/onnx-build/onnx
     ${CMAKE_CURRENT_BINARY_DIR}/_deps/onnx-src
 )
-
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/_deps/onnx-build)
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/_deps/onnx-build/onnx)
 
 # ================================================================
 # Драйвер
@@ -83,26 +83,3 @@ target_link_libraries(tcc_driver
     ${LLVM_LIBS}
     ${PROTOBUF_LIBRARIES}
 )
-
-# ================================================================
-# Тесты
-# ================================================================
-enable_testing()
-
-add_executable(tcc_mlir_tests
-    tests/test_mlir_generator.cpp
-    tests/test_type_converter.cpp
-)
-
-target_link_libraries(tcc_mlir_tests
-    PRIVATE
-    tcc_frontend
-    tcc_middleend
-    GTest::gtest
-    GTest::gtest_main
-    ${MLIR_LIBS}
-    ${LLVM_LIBS}
-)
-
-include(GoogleTest)
-gtest_discover_tests(tcc_mlir_tests)

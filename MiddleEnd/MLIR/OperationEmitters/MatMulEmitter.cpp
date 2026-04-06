@@ -21,6 +21,7 @@ mlir::Value MatMulEmitter::emit(const std::vector<mlir::Value>& inputs,
     auto rhs = inputs[1];
 
     auto lhsType = lhs.getType().cast<mlir::RankedTensorType>();
+    auto rhsType = rhs.getType().cast<mlir::RankedTensorType>();
     auto elementType = lhsType.getElementType();
 
     // Создание типа результата
@@ -33,15 +34,31 @@ mlir::Value MatMulEmitter::emit(const std::vector<mlir::Value>& inputs,
     // Пустой тензор для результата
     auto empty = builder.create<mlir::tensor::EmptyOp>(loc, mlirDims, elementType);
 
-    // Используем linalg.matmul
-    auto matmulOp = builder.create<mlir::linalg::MatmulOp>(
-        loc, mlir::TypeRange(resultType),
-        mlir::ValueRange({lhs, rhs}),
-        mlir::ValueRange(empty));
+    int rank = resultType.getRank();
+    mlir::Value result;
 
-    auto result = matmulOp.getResult(0);
+    if (rank == 2) {
+        // 2D матричное умножение
+        auto matmulOp = builder.create<mlir::linalg::MatmulOp>(
+            loc, mlir::TypeRange(resultType),
+            mlir::ValueRange({lhs, rhs}),
+            mlir::ValueRange(empty));
+        result = matmulOp.getResult(0);
+    }
+    else if (rank == 3) {
+        // 3D batch матричное умножение
+        auto batchMatmulOp = builder.create<mlir::linalg::BatchMatmulOp>(
+            loc, mlir::TypeRange(resultType),
+            mlir::ValueRange({lhs, rhs}),
+            mlir::ValueRange(empty));
+        result = batchMatmulOp.getResult(0);
+    }
+    else {
+        llvm::errs() << "Unsupported rank for MatMul: " << rank << "\n";
+        return nullptr;
+    }
+
     tensorMap[outputNames[0]] = result;
-
     return result;
 }
 
