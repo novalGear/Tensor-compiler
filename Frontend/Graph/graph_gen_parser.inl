@@ -64,7 +64,7 @@ inline void parse_attributes(ReLUNode& node, const onnx::NodeProto& proto) {
     }
 }
 
-inline ComputeNode create_ReLU_node(const onnx::NodeProto& proto) {
+inline ComputeNode create_Relu_node(const onnx::NodeProto& proto) {
     ReLUNode node;
     node.name = proto.name();
     node.input_tensors.assign(proto.input().begin(), proto.input().end());
@@ -172,7 +172,7 @@ inline ComputeNode create_node_from_proto(const onnx::NodeProto& proto) {
     if (op == "Constant") return create_Constant_node(proto);
     if (op == "Add") return create_Add_node(proto);
     if (op == "Mul") return create_Mul_node(proto);
-    if (op == "ReLU") return create_ReLU_node(proto);
+    if (op == "Relu") return create_Relu_node(proto);
     if (op == "MatMul") return create_MatMul_node(proto);
     if (op == "Gemm") return create_Gemm_node(proto);
     if (op == "Conv") return create_Conv_node(proto);
