@@ -33,18 +33,25 @@ public:
     std::vector<ComputeNode> nodes;
 
     // Карта тензоров
-    std::unordered_map<TensorID, TensorDescription> tensor_map;
+    std::unordered_map<TensorID, TensorDescription> tensor_descr_map;
+
+    NodeID addNode(ComputeNode&& node);
+    static ConstantNode makeConstantNode(const std::string& tensor_name,
+                                          std::vector<float> data);
 
     static std::unique_ptr<ComputeGraph> load_from_onnx(const std::string& filepath);
 
-    std::vector<size_t> topologicalSort() const;
+    std::vector<size_t> topologicalSort(bool verbose) const;
 
-    // Сбор входных и выходных тензоров
     std::vector<TensorID> collectInputs() const;
     std::vector<TensorID> collectOutputs() const;
 
-    // Получение размерностей тензора
     std::vector<size_t> getTensorDims(const TensorID& tensorId) const;
+
+    void print_tensor_descr_map(std::ostream& os = std::cout) const;
+    void print_nodes(std::ostream& os = std::cout) const;
+    void print_inputs_outputs(std::ostream& os = std::cout) const;
+    void print_graph_info(std::ostream& os = std::cout) const;
 
 private:
     static bool read_from_onnx_proto(const std::string& filepath, onnx::ModelProto& model_out);
@@ -55,6 +62,14 @@ private:
     void build_nodes(const onnx::GraphProto& gp);
     void update_tensor_connections(NodeID node_id, const ComputeNode& node);
     void fill_tensor_shapes(const onnx::GraphProto& gp);
+
+    void create_constant_nodes_from_initializers(const onnx::GraphProto& gp);
+    static std::vector<float> extractInitializerData(const onnx::TensorProto& initializer);
+    void updateTensorMapForConstant(const std::string& tensor_name,
+                                     NodeID node_id,
+                                     const onnx::TensorProto& initializer);
+
+    static std::string getNodeTypeName(const ComputeNode& node);
 };
 
 } // namespace tcc

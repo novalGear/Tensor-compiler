@@ -13,10 +13,10 @@ protected:
         TensorID x = "x", y = "y", mid = "mid", out = "out";
 
         // Тензоры
-        graph.tensor_map[x] = {{2, 3}, NO_PRODUCER, {}, true, false};
-        graph.tensor_map[y] = {{2, 3}, NO_PRODUCER, {}, true, false};
-        graph.tensor_map[mid] = {{2, 3}, 0, {1}, false, false};
-        graph.tensor_map[out] = {{2, 3}, 1, {}, false, false};
+        graph.tensor_descr_map[x] = {{2, 3}, NO_PRODUCER, {}, true, false};
+        graph.tensor_descr_map[y] = {{2, 3}, NO_PRODUCER, {}, true, false};
+        graph.tensor_descr_map[mid] = {{2, 3}, 0, {1}, false, false};
+        graph.tensor_descr_map[out] = {{2, 3}, 1, {}, false, false};
 
         // Узел 0: Add
         AddNode add;
@@ -34,11 +34,11 @@ protected:
         graph.nodes.push_back(mul);
 
         // Связи
-        graph.tensor_map[mid].producer_node_id = 0;
-        graph.tensor_map[out].producer_node_id = 1;
-        graph.tensor_map[x].consumer_node_ids = {0, 1};
-        graph.tensor_map[y].consumer_node_ids = {0};
-        graph.tensor_map[mid].consumer_node_ids = {1};
+        graph.tensor_descr_map[mid].producer_node_id = 0;
+        graph.tensor_descr_map[out].producer_node_id = 1;
+        graph.tensor_descr_map[x].consumer_node_ids = {0, 1};
+        graph.tensor_descr_map[y].consumer_node_ids = {0};
+        graph.tensor_descr_map[mid].consumer_node_ids = {1};
 
         return graph;
     }
@@ -50,12 +50,12 @@ protected:
         TensorID a = "a", b = "b", out1 = "out1";
         TensorID c = "c", d = "d", out2 = "out2";
 
-        graph.tensor_map[a] = {{2, 3}, NO_PRODUCER, {}, true, false};
-        graph.tensor_map[b] = {{2, 3}, NO_PRODUCER, {}, true, false};
-        graph.tensor_map[out1] = {{2, 3}, 0, {}, false, false};
-        graph.tensor_map[c] = {{2, 3}, NO_PRODUCER, {}, true, false};
-        graph.tensor_map[d] = {{2, 3}, NO_PRODUCER, {}, true, false};
-        graph.tensor_map[out2] = {{2, 3}, 1, {}, false, false};
+        graph.tensor_descr_map[a] = {{2, 3}, NO_PRODUCER, {}, true, false};
+        graph.tensor_descr_map[b] = {{2, 3}, NO_PRODUCER, {}, true, false};
+        graph.tensor_descr_map[out1] = {{2, 3}, 0, {}, false, false};
+        graph.tensor_descr_map[c] = {{2, 3}, NO_PRODUCER, {}, true, false};
+        graph.tensor_descr_map[d] = {{2, 3}, NO_PRODUCER, {}, true, false};
+        graph.tensor_descr_map[out2] = {{2, 3}, 1, {}, false, false};
 
         AddNode add1;
         add1.name = "add1";
@@ -70,12 +70,12 @@ protected:
         graph.nodes.push_back(add1);
         graph.nodes.push_back(add2);
 
-        graph.tensor_map[out1].producer_node_id = 0;
-        graph.tensor_map[out2].producer_node_id = 1;
-        graph.tensor_map[a].consumer_node_ids = {0};
-        graph.tensor_map[b].consumer_node_ids = {0};
-        graph.tensor_map[c].consumer_node_ids = {1};
-        graph.tensor_map[d].consumer_node_ids = {1};
+        graph.tensor_descr_map[out1].producer_node_id = 0;
+        graph.tensor_descr_map[out2].producer_node_id = 1;
+        graph.tensor_descr_map[a].consumer_node_ids = {0};
+        graph.tensor_descr_map[b].consumer_node_ids = {0};
+        graph.tensor_descr_map[c].consumer_node_ids = {1};
+        graph.tensor_descr_map[d].consumer_node_ids = {1};
 
         return graph;
     }
@@ -86,17 +86,17 @@ protected:
 
         TensorID input = "input", out = "out";
 
-        graph.tensor_map[input] = {{2, 3}, NO_PRODUCER, {}, true, false};
-        graph.tensor_map[out] = {{2, 3}, 0, {}, false, false};
+        graph.tensor_descr_map[input] = {{2, 3}, NO_PRODUCER, {}, true, false};
+        graph.tensor_descr_map[out] = {{2, 3}, 0, {}, false, false};
 
-        ReLUNode ReLU;
-        ReLU.name = "ReLU";
-        ReLU.input_tensors = {input};
-        ReLU.output_tensors = {out};
+        ReluNode Relu;
+        Relu.name = "Relu";
+        Relu.input_tensors = {input};
+        Relu.output_tensors = {out};
 
-        graph.nodes.push_back(ReLU);
-        graph.tensor_map[out].producer_node_id = 0;
-        graph.tensor_map[input].consumer_node_ids = {0};
+        graph.nodes.push_back(Relu);
+        graph.tensor_descr_map[out].producer_node_id = 0;
+        graph.tensor_descr_map[input].consumer_node_ids = {0};
 
         return graph;
     }
@@ -107,7 +107,7 @@ protected:
 // ================================================================
 TEST_F(TopologicalSortTest, LinearGraph) {
     auto graph = createLinearGraph();
-    auto order = graph.topologicalSort();
+    auto order = graph.topologicalSort(false);
 
     EXPECT_EQ(order.size(), 2);
     // Add (узел 0) должен быть перед Mul (узел 1)
@@ -120,7 +120,7 @@ TEST_F(TopologicalSortTest, LinearGraph) {
 // ================================================================
 TEST_F(TopologicalSortTest, IndependentGraph) {
     auto graph = createIndependentGraph();
-    auto order = graph.topologicalSort();
+    auto order = graph.topologicalSort(false);
 
     EXPECT_EQ(order.size(), 2);
     // Оба узла независимы, порядок может быть любым
@@ -134,7 +134,7 @@ TEST_F(TopologicalSortTest, IndependentGraph) {
 // ================================================================
 TEST_F(TopologicalSortTest, SingleNodeGraph) {
     auto graph = createSingleNodeGraph();
-    auto order = graph.topologicalSort();
+    auto order = graph.topologicalSort(false);
 
     EXPECT_EQ(order.size(), 1);
     EXPECT_EQ(order[0], 0);
@@ -145,7 +145,7 @@ TEST_F(TopologicalSortTest, SingleNodeGraph) {
 // ================================================================
 TEST_F(TopologicalSortTest, EmptyGraph) {
     ComputeGraph graph;
-    auto order = graph.topologicalSort();
+    auto order = graph.topologicalSort(false);
 
     EXPECT_TRUE(order.empty());
 }

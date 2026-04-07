@@ -1,0 +1,296 @@
+Loading ONNX model: ./data/test_model.onnx
+[Info] Loading ONNX model from: ./data/test_model.onnx
+[Info] Created ConstantNode for: weight (size: 0, node_id: 5)
+[Info] Created ConstantNode for: bias (size: 0, node_id: 6)
+[Info] Created ConstantNode for: scale (size: 0, node_id: 7)
+[Info] Created ConstantNode for: add_const (size: 0, node_id: 8)
+
+============================================================
+COMPUTE GRAPH DIAGNOSTICS
+============================================================
+
+📊 Summary:
+  Nodes: 9
+  Tensors: 10
+
+=== Graph Inputs (1) ===
+  input dims: [1 10 ]
+
+=== Graph Outputs (1) ===
+  output
+
+=== Tensor Map (JSON) ===
+{
+  "tensors": [
+    {
+      "name": "output",
+      "dims": [],
+      "producer": 4,
+      "producer_type": "Add",
+      "consumers_count": 0,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "/Relu_output_0",
+      "dims": [],
+      "producer": 2,
+      "producer_type": "Relu",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "/Add_output_0",
+      "dims": [],
+      "producer": 1,
+      "producer_type": "Add",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "/MatMul_output_0",
+      "dims": [],
+      "producer": 0,
+      "producer_type": "MatMul",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "add_const",
+      "dims": [5],
+      "producer": 8,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "bias",
+      "dims": [5],
+      "producer": 6,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "/Mul_output_0",
+      "dims": [],
+      "producer": 3,
+      "producer_type": "Mul",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "weight",
+      "dims": [10, 5],
+      "producer": 5,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "scale",
+      "dims": [5],
+      "producer": 7,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "input",
+      "dims": [1, 10],
+      "producer": null,
+      "producer_type": null,
+      "consumers_count": 1,
+      "is_graph_input": true,
+      "is_initializer": false
+    }
+  ]
+}
+
+=== Nodes ===
+  Node 0: name='/MatMul', type=MatMul, inputs: [input, weight], outputs: [/MatMul_output_0]
+  Node 1: name='/Add', type=Add, inputs: [/MatMul_output_0, bias], outputs: [/Add_output_0]
+  Node 2: name='/Relu', type=Relu, inputs: [/Add_output_0], outputs: [/Relu_output_0]
+  Node 3: name='/Mul', type=Mul, inputs: [/Relu_output_0, scale], outputs: [/Mul_output_0]
+  Node 4: name='/Add_1', type=Add, inputs: [/Mul_output_0, add_const], outputs: [output]
+  Node 5: name='weight_const', type=Constant, inputs: [], outputs: [weight], value_size: 50
+  Node 6: name='bias_const', type=Constant, inputs: [], outputs: [bias], value_size: 5
+  Node 7: name='scale_const', type=Constant, inputs: [], outputs: [scale], value_size: 5
+  Node 8: name='add_const_const', type=Constant, inputs: [], outputs: [add_const], value_size: 5
+
+============================================================
+[DEBUG] Emitting ConstantNode
+[DEBUG] ConstantEmitter: creating constant for weight
+[DEBUG] ConstantEmitter: saved weight to tensorMap
+[DEBUG] Emitting ConstantNode
+[DEBUG] ConstantEmitter: creating constant for bias
+[DEBUG] ConstantEmitter: saved bias to tensorMap
+[DEBUG] Emitting ConstantNode
+[DEBUG] ConstantEmitter: creating constant for scale
+[DEBUG] ConstantEmitter: saved scale to tensorMap
+[DEBUG] Emitting ConstantNode
+[DEBUG] ConstantEmitter: creating constant for add_const
+[DEBUG] ConstantEmitter: saved add_const to tensorMap
+[DEBUG] Emitting MatmulNode
+
+
+Unsupported rank for MatMul: 0
+Error: Input tensor /MatMul_output_0 not found
+Error: MLIR generation failed
+Loading ONNX model: ./data/test_model.onnx
+[Info] Loading ONNX model from: ./data/test_model.onnx
+[Info] Created ConstantNode for: weight (size: 0, node_id: 5)
+[Info] Created ConstantNode for: bias (size: 0, node_id: 6)
+[Info] Created ConstantNode for: scale (size: 0, node_id: 7)
+[Info] Created ConstantNode for: add_const (size: 0, node_id: 8)
+
+============================================================
+COMPUTE GRAPH DIAGNOSTICS
+============================================================
+
+📊 Summary:
+  Nodes: 9
+  Tensors: 10
+
+=== Graph Inputs (1) ===
+  input dims: [1 10 ]
+
+=== Graph Outputs (1) ===
+  output
+
+=== Tensor Map (JSON) ===
+{
+  "tensors": [
+    {
+      "name": "output",
+      "dims": [],
+      "producer": 4,
+      "producer_type": "Add",
+      "consumers_count": 0,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "/Relu_output_0",
+      "dims": [],
+      "producer": 2,
+      "producer_type": "Relu",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "/Add_output_0",
+      "dims": [],
+      "producer": 1,
+      "producer_type": "Add",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "/MatMul_output_0",
+      "dims": [],
+      "producer": 0,
+      "producer_type": "MatMul",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "add_const",
+      "dims": [5],
+      "producer": 8,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "bias",
+      "dims": [5],
+      "producer": 6,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "/Mul_output_0",
+      "dims": [],
+      "producer": 3,
+      "producer_type": "Mul",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "weight",
+      "dims": [10, 5],
+      "producer": 5,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "scale",
+      "dims": [5],
+      "producer": 7,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "input",
+      "dims": [1, 10],
+      "producer": null,
+      "producer_type": null,
+      "consumers_count": 1,
+      "is_graph_input": true,
+      "is_initializer": false
+    }
+  ]
+}
+
+=== Nodes ===
+  Node 0: name='/MatMul', type=MatMul, inputs: [input, weight], outputs: [/MatMul_output_0]
+  Node 1: name='/Add', type=Add, inputs: [/MatMul_output_0, bias], outputs: [/Add_output_0]
+  Node 2: name='/Relu', type=Relu, inputs: [/Add_output_0], outputs: [/Relu_output_0]
+  Node 3: name='/Mul', type=Mul, inputs: [/Relu_output_0, scale], outputs: [/Mul_output_0]
+  Node 4: name='/Add_1', type=Add, inputs: [/Mul_output_0, add_const], outputs: [output]
+  Node 5: name='weight_const', type=Constant, inputs: [], outputs: [weight], value_size: 50
+  Node 6: name='bias_const', type=Constant, inputs: [], outputs: [bias], value_size: 5
+  Node 7: name='scale_const', type=Constant, inputs: [], outputs: [scale], value_size: 5
+  Node 8: name='add_const_const', type=Constant, inputs: [], outputs: [add_const], value_size: 5
+
+============================================================
+[DEBUG] === createMainFunction START ===
+[DEBUG] collectInputs returned 1 inputs
+[DEBUG]   Input: 'input'
+[DEBUG] Adding inputs to tensorMap:
+[DEBUG]   tensorMap['input'] = argument 0
+[DEBUG] tensorMap now has 1 entries
+[DEBUG]   tensorMap contains: 'input'
+[DEBUG] Emitting ConstantNode
+[DEBUG] ConstantEmitter: creating constant for weight
+[DEBUG] ConstantEmitter: saved weight to tensorMap
+[DEBUG] Emitting ConstantNode
+[DEBUG] ConstantEmitter: creating constant for bias
+[DEBUG] ConstantEmitter: saved bias to tensorMap
+[DEBUG] Emitting ConstantNode
+[DEBUG] ConstantEmitter: creating constant for scale
+[DEBUG] ConstantEmitter: saved scale to tensorMap
+[DEBUG] Emitting ConstantNode
+[DEBUG] ConstantEmitter: creating constant for add_const
+[DEBUG] ConstantEmitter: saved add_const to tensorMap
+[DEBUG] Emitting MatmulNode

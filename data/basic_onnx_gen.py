@@ -15,8 +15,8 @@ class ComprehensiveNet(nn.Module):
         self.conv_layer = nn.Conv2d(in_channels=3, out_channels=8, kernel_size=3,
                                     stride=2, padding=1, bias=True)
 
-        # 2. ReLU: Активация после свертки
-        self.ReLU_layer = nn.ReLU()
+        # 2. Relu: Активация после свертки
+        self.Relu_layer = nn.Relu()
 
         # Подготовим веса для остальных операций, чтобы они были константами в графе
         # 3. Gemm: Обычно это Linear слой.
@@ -41,8 +41,8 @@ class ComprehensiveNet(nn.Module):
         # Атрибуты: stride=[2,2], pads=[1,1,1,1], dilations=[1,1]
         x = self.conv_layer(x)
 
-        # --- Узел 2: ReLU ---
-        x = self.ReLU_layer(x)
+        # --- Узел 2: Relu ---
+        x = self.Relu_layer(x)
 
         # Подготовка к линейным операциям: Flatten
         # Размер становится [Batch, 8*16*16] = [1, 2048]

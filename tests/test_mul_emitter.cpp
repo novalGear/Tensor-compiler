@@ -13,9 +13,9 @@ protected:
 
         TensorID a = "input_a", b = "input_b", out = "output";
 
-        graph.tensor_map[a] = {dims, NO_PRODUCER, {}, true, false};
-        graph.tensor_map[b] = {dims, NO_PRODUCER, {}, true, false};
-        graph.tensor_map[out] = {dims, 0, {}, false, false};
+        graph.tensor_descr_map[a] = {dims, NO_PRODUCER, {}, true, false};
+        graph.tensor_descr_map[b] = {dims, NO_PRODUCER, {}, true, false};
+        graph.tensor_descr_map[out] = {dims, 0, {}, false, false};
 
         MulNode mulNode;
         mulNode.name = "mul1";
@@ -23,9 +23,9 @@ protected:
         mulNode.output_tensors = {out};
 
         graph.nodes.push_back(mulNode);
-        graph.tensor_map[out].producer_node_id = 0;
-        graph.tensor_map[a].consumer_node_ids = {0};
-        graph.tensor_map[b].consumer_node_ids = {0};
+        graph.tensor_descr_map[out].producer_node_id = 0;
+        graph.tensor_descr_map[a].consumer_node_ids = {0};
+        graph.tensor_descr_map[b].consumer_node_ids = {0};
 
         return graph;
     }

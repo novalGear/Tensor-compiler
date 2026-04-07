@@ -6,7 +6,7 @@ set(MLIR_SOURCES
     OperationEmitters/AddEmitter.cpp
     OperationEmitters/MulEmitter.cpp
     OperationEmitters/ConstantEmitter.cpp
-    OperationEmitters/ReLUEmitter.cpp
+    OperationEmitters/ReluEmitter.cpp
     OperationEmitters/MatMulEmitter.cpp
 )
 

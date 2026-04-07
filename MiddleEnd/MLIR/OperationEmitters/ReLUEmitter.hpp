@@ -1,4 +1,4 @@
-// ReLUEmitter.hpp
+// ReluEmitter.hpp
 #pragma once
 
 #include "IOperationEmitter.hpp"
@@ -8,9 +8,9 @@
 namespace tcc {
 namespace mlir_gen {
 
-class ReLUEmitter : public IOperationEmitter {
+class ReluEmitter : public IOperationEmitter {
 public:
-    ReLUEmitter(mlir::OpBuilder& builder,
+    ReluEmitter(mlir::OpBuilder& builder,
                 std::unordered_map<std::string, mlir::Value>& tensorMap)
         : builder(builder), tensorMap(tensorMap) {}
 

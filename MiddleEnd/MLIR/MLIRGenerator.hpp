@@ -21,7 +21,7 @@ namespace mlir_gen {
 class AddEmitter;
 class MulEmitter;
 class ConstantEmitter;
-class ReLUEmitter;
+class ReluEmitter;
 class MatMulEmitter;
 
 class MLIRGenerator {
@@ -44,15 +44,14 @@ public:
 private:
     void initMLIRContext();
     void initEmitters();
-    std::vector<size_t> topologicalSort(const ComputeGraph& graph);
-    std::vector<TensorID> collectGraphInputs(const ComputeGraph& graph);
-    std::vector<TensorID> collectGraphOutputs(const ComputeGraph& graph);
-    std::vector<size_t> getTensorDims(const ComputeGraph& graph, const TensorID& tensorId);
-    bool createFunctionArguments(const std::vector<TensorID>& inputs,
-                                 const std::vector<TensorID>& outputs);
-    bool createFunctionReturn(const std::vector<TensorID>& outputs);
+
     bool createMainFunction(const ComputeGraph& graph);
+    bool createFunctionReturn(const std::vector<TensorID>& outputs);
     bool emitNode(const ComputeGraph& graph, size_t nodeId, const ComputeNode& node);
+
+    void debugPrintTensorMap(const std::string& phase);
+    void debugPrintNode(size_t nodeId, const ComputeNode& node);
+    bool validateInputs(const std::vector<std::string>& inputTensors);
 
     struct Impl;
     std::unique_ptr<Impl> pImpl;

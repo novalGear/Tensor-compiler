@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
 
     std::cout << "[SUCCESS] Model loaded." << std::endl;
     std::cout << "  Nodes: " << graph->nodes.size() << std::endl;
-    std::cout << "  Tensors: " << graph->tensor_map.size() << std::endl;
+    std::cout << "  Tensors: " << graph->tensor_descr_map.size() << std::endl;
 
     // 3. Дамп в DOT
     tcc::save_dot(*graph, "data/output.dot");

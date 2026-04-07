@@ -20,13 +20,13 @@ protected:
         TensorID output = "output";
 
         // Входной тензор
-        graph.tensor_map[input] = {{2, 3}, NO_PRODUCER, {1}, true, false};
+        graph.tensor_descr_map[input] = {{2, 3}, NO_PRODUCER, {1}, true, false};
 
         // Константа
-        graph.tensor_map[const_out] = {{2, 3}, 0, {1}, false, false};
+        graph.tensor_descr_map[const_out] = {{2, 3}, 0, {1}, false, false};
 
         // Выход
-        graph.tensor_map[output] = {{2, 3}, 1, {}, false, false};
+        graph.tensor_descr_map[output] = {{2, 3}, 1, {}, false, false};
 
         // Constant node (индекс 0)
         ConstantNode constNode;
@@ -44,10 +44,10 @@ protected:
         graph.nodes.push_back(addNode);
 
         // Связи
-        graph.tensor_map[const_out].producer_node_id = 0;
-        graph.tensor_map[output].producer_node_id = 1;
-        graph.tensor_map[input].consumer_node_ids = {1};
-        graph.tensor_map[const_out].consumer_node_ids = {1};
+        graph.tensor_descr_map[const_out].producer_node_id = 0;
+        graph.tensor_descr_map[output].producer_node_id = 1;
+        graph.tensor_descr_map[input].consumer_node_ids = {1};
+        graph.tensor_descr_map[const_out].consumer_node_ids = {1};
 
         return graph;
     }
@@ -58,7 +58,7 @@ protected:
 
         TensorID out = "out";
 
-        graph.tensor_map[out] = {{2, 2}, 0, {}, false, false};
+        graph.tensor_descr_map[out] = {{2, 2}, 0, {}, false, false};
 
         ConstantNode constNode;
         constNode.name = "const";
@@ -66,7 +66,7 @@ protected:
         constNode.value = {1.0f, 2.0f, 3.0f, 4.0f};
 
         graph.nodes.push_back(constNode);
-        graph.tensor_map[out].producer_node_id = 0;
+        graph.tensor_descr_map[out].producer_node_id = 0;
 
         return graph;
     }
@@ -124,9 +124,9 @@ TEST_F(MLIRGeneratorTest, SimpleAddGraph) {
 
     TensorID x = "x", y = "y", out = "out";
 
-    graph.tensor_map[x] = {{2, 3}, NO_PRODUCER, {0}, true, false};
-    graph.tensor_map[y] = {{2, 3}, NO_PRODUCER, {0}, true, false};
-    graph.tensor_map[out] = {{2, 3}, 0, {}, false, false};
+    graph.tensor_descr_map[x] = {{2, 3}, NO_PRODUCER, {0}, true, false};
+    graph.tensor_descr_map[y] = {{2, 3}, NO_PRODUCER, {0}, true, false};
+    graph.tensor_descr_map[out] = {{2, 3}, 0, {}, false, false};
 
     AddNode addNode;
     addNode.name = "add";
@@ -134,9 +134,9 @@ TEST_F(MLIRGeneratorTest, SimpleAddGraph) {
     addNode.output_tensors = {out};
 
     graph.nodes.push_back(addNode);
-    graph.tensor_map[out].producer_node_id = 0;
-    graph.tensor_map[x].consumer_node_ids = {0};
-    graph.tensor_map[y].consumer_node_ids = {0};
+    graph.tensor_descr_map[out].producer_node_id = 0;
+    graph.tensor_descr_map[x].consumer_node_ids = {0};
+    graph.tensor_descr_map[y].consumer_node_ids = {0};
 
     MLIRGenerator::Config cfg;
     cfg.printMLIR = true;
@@ -153,9 +153,9 @@ TEST_F(MLIRGeneratorTest, SimpleMulGraph) {
 
     TensorID x = "x", y = "y", out = "out";
 
-    graph.tensor_map[x] = {{2, 3}, NO_PRODUCER, {0}, true, false};
-    graph.tensor_map[y] = {{2, 3}, NO_PRODUCER, {0}, true, false};
-    graph.tensor_map[out] = {{2, 3}, 0, {}, false, false};
+    graph.tensor_descr_map[x] = {{2, 3}, NO_PRODUCER, {0}, true, false};
+    graph.tensor_descr_map[y] = {{2, 3}, NO_PRODUCER, {0}, true, false};
+    graph.tensor_descr_map[out] = {{2, 3}, 0, {}, false, false};
 
     MulNode mulNode;
     mulNode.name = "mul";
@@ -163,9 +163,9 @@ TEST_F(MLIRGeneratorTest, SimpleMulGraph) {
     mulNode.output_tensors = {out};
 
     graph.nodes.push_back(mulNode);
-    graph.tensor_map[out].producer_node_id = 0;
-    graph.tensor_map[x].consumer_node_ids = {0};
-    graph.tensor_map[y].consumer_node_ids = {0};
+    graph.tensor_descr_map[out].producer_node_id = 0;
+    graph.tensor_descr_map[x].consumer_node_ids = {0};
+    graph.tensor_descr_map[y].consumer_node_ids = {0};
 
     MLIRGenerator::Config cfg;
     cfg.printMLIR = true;

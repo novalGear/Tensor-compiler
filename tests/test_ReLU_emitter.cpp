@@ -1,4 +1,4 @@
-// tests/test_ReLU_emitter.cpp
+// tests/test_Relu_emitter.cpp
 #include <gtest/gtest.h>
 #include "graph.hpp"
 #include "MiddleEnd/MLIR/MLIRGenerator.hpp"
@@ -6,31 +6,31 @@
 using namespace tcc;
 using namespace tcc::mlir_gen;
 
-class ReLUEmitterTest : public ::testing::Test {
+class ReluEmitterTest : public ::testing::Test {
 protected:
-    ComputeGraph createReLUGraph(const std::vector<size_t>& dims) {
+    ComputeGraph createReluGraph(const std::vector<size_t>& dims) {
         ComputeGraph graph;
 
         TensorID input = "input", out = "output";
 
-        graph.tensor_map[input] = {dims, NO_PRODUCER, {}, true, false};
-        graph.tensor_map[out] = {dims, 0, {}, false, false};
+        graph.tensor_descr_map[input] = {dims, NO_PRODUCER, {}, true, false};
+        graph.tensor_descr_map[out] = {dims, 0, {}, false, false};
 
-        ReLUNode ReLUNode;
-        ReLUNode.name = "ReLU1";
-        ReLUNode.input_tensors = {input};
-        ReLUNode.output_tensors = {out};
+        ReluNode ReluNode;
+        ReluNode.name = "Relu1";
+        ReluNode.input_tensors = {input};
+        ReluNode.output_tensors = {out};
 
-        graph.nodes.push_back(ReLUNode);
-        graph.tensor_map[out].producer_node_id = 0;
-        graph.tensor_map[input].consumer_node_ids = {0};
+        graph.nodes.push_back(ReluNode);
+        graph.tensor_descr_map[out].producer_node_id = 0;
+        graph.tensor_descr_map[input].consumer_node_ids = {0};
 
         return graph;
     }
 };
 
-TEST_F(ReLUEmitterTest, ReLU2DMatrix) {
-    auto graph = createReLUGraph({2, 3});
+TEST_F(ReluEmitterTest, Relu2DMatrix) {
+    auto graph = createReluGraph({2, 3});
 
     MLIRGenerator::Config cfg;
     cfg.printMLIR = true;
@@ -39,8 +39,8 @@ TEST_F(ReLUEmitterTest, ReLU2DMatrix) {
     EXPECT_TRUE(generator.generate(graph));
 }
 
-TEST_F(ReLUEmitterTest, ReLU3DTensor) {
-    auto graph = createReLUGraph({2, 3, 4});
+TEST_F(ReluEmitterTest, Relu3DTensor) {
+    auto graph = createReluGraph({2, 3, 4});
 
     MLIRGenerator::Config cfg;
     cfg.printMLIR = true;
@@ -49,8 +49,8 @@ TEST_F(ReLUEmitterTest, ReLU3DTensor) {
     EXPECT_TRUE(generator.generate(graph));
 }
 
-TEST_F(ReLUEmitterTest, ReLUScalar) {
-    auto graph = createReLUGraph({});
+TEST_F(ReluEmitterTest, ReluScalar) {
+    auto graph = createReluGraph({});
 
     MLIRGenerator::Config cfg;
     cfg.printMLIR = true;

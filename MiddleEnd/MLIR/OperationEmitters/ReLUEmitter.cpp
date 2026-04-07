@@ -1,5 +1,5 @@
-// ReLUEmitter.cpp
-#include "ReLUEmitter.hpp"
+// ReluEmitter.cpp
+#include "ReluEmitter.hpp"
 #include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
@@ -8,14 +8,14 @@
 namespace tcc {
 namespace mlir_gen {
 
-mlir::Value ReLUEmitter::emit(const std::vector<mlir::Value>& inputs,
+mlir::Value ReluEmitter::emit(const std::vector<mlir::Value>& inputs,
                                const std::vector<std::string>& outputNames,
                                const std::vector<size_t>& outputDims) {
 
     auto loc = mlir::UnknownLoc::get(builder.getContext());
 
     if (inputs.size() != 1) {
-        llvm::errs() << "ReLU operation requires exactly 1 input\n";
+        llvm::errs() << "Relu operation requires exactly 1 input\n";
         return nullptr;
     }
 

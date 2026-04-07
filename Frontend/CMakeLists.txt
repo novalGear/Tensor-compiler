@@ -92,6 +92,7 @@ add_dependencies(onnx_proto_lib onnx_proto)
 # ==============================================================================
 
 set(FRONTEND_SOURCES
+    Graph/graph.cpp
     Graph/graph_utils.cpp
     Graph/convertion.cpp
     Graph/topological_sort.cpp

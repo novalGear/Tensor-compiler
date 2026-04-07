@@ -12,9 +12,9 @@ TEST(AddEmitterStandalone, Add2x2) {
     TensorID a = "a", b = "b", out = "out";
 
     // Входы
-    graph.tensor_map[a] = {{2, 2}, NO_PRODUCER, {0}, true, false};
-    graph.tensor_map[b] = {{2, 2}, NO_PRODUCER, {0}, true, false};
-    graph.tensor_map[out] = {{2, 2}, 0, {}, false, false};
+    graph.tensor_descr_map[a] = {{2, 2}, NO_PRODUCER, {0}, true, false};
+    graph.tensor_descr_map[b] = {{2, 2}, NO_PRODUCER, {0}, true, false};
+    graph.tensor_descr_map[out] = {{2, 2}, 0, {}, false, false};
 
     // Add узел
     AddNode addNode;
@@ -23,9 +23,9 @@ TEST(AddEmitterStandalone, Add2x2) {
     addNode.output_tensors = {out};
 
     graph.nodes.push_back(addNode);
-    graph.tensor_map[out].producer_node_id = 0;
-    graph.tensor_map[a].consumer_node_ids = {0};
-    graph.tensor_map[b].consumer_node_ids = {0};
+    graph.tensor_descr_map[out].producer_node_id = 0;
+    graph.tensor_descr_map[a].consumer_node_ids = {0};
+    graph.tensor_descr_map[b].consumer_node_ids = {0};
 
     MLIRGenerator::Config cfg;
     cfg.printMLIR = true;

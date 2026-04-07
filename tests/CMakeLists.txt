@@ -77,7 +77,7 @@ add_executable(tcc_emitter_tests
     test_const_emitter.cpp
     test_add_emitter.cpp
     test_mul_emitter.cpp
-    test_ReLU_emitter.cpp
+    test_Relu_emitter.cpp
     test_matmul_emitter.cpp
 )
 

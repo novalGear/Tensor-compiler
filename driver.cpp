@@ -24,6 +24,7 @@ struct Options {
     std::string saveMlirFile = "";
     bool emitMlir = false;
     bool help = false;
+    bool verbose = false;
 };
 
 Options parseArgs(int argc, char** argv) {
@@ -38,6 +39,9 @@ Options parseArgs(int argc, char** argv) {
         }
         else if (strcmp(argv[i], "--output") == 0 && i + 1 < argc) {
             opts.outputPrefix = argv[++i];
+        }
+        else if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
+            opts.verbose = true;
         }
         else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             opts.help = true;
@@ -71,8 +75,10 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::cout << "Graph loaded. Nodes: " << graph->nodes.size()
-              << ", Tensors: " << graph->tensor_map.size() << "\n";
+    // Диагностика графа (если включен verbose режим)
+    if (opts.verbose) {
+        graph->print_graph_info();
+    }
 
     // Настройка MLIR генератора
     tcc::mlir_gen::MLIRGenerator::Config cfg;

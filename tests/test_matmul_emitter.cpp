@@ -14,9 +14,9 @@ protected:
 
         TensorID A = "A", B = "B", C = "C";
 
-        graph.tensor_map[A] = {{M, K}, NO_PRODUCER, {}, true, false};
-        graph.tensor_map[B] = {{K, N}, NO_PRODUCER, {}, true, false};
-        graph.tensor_map[C] = {{M, N}, 0, {}, false, false};
+        graph.tensor_descr_map[A] = {{M, K}, NO_PRODUCER, {}, true, false};
+        graph.tensor_descr_map[B] = {{K, N}, NO_PRODUCER, {}, true, false};
+        graph.tensor_descr_map[C] = {{M, N}, 0, {}, false, false};
 
         MatmulNode matmulNode;
         matmulNode.name = "matmul1";
@@ -24,9 +24,9 @@ protected:
         matmulNode.output_tensors = {C};
 
         graph.nodes.push_back(matmulNode);
-        graph.tensor_map[C].producer_node_id = 0;
-        graph.tensor_map[A].consumer_node_ids = {0};
-        graph.tensor_map[B].consumer_node_ids = {0};
+        graph.tensor_descr_map[C].producer_node_id = 0;
+        graph.tensor_descr_map[A].consumer_node_ids = {0};
+        graph.tensor_descr_map[B].consumer_node_ids = {0};
 
         return graph;
     }
@@ -37,9 +37,9 @@ protected:
 
         TensorID A = "A", B = "B", C = "C";
 
-        graph.tensor_map[A] = {{Batch, M, K}, NO_PRODUCER, {}, true, false};
-        graph.tensor_map[B] = {{Batch, K, N}, NO_PRODUCER, {}, true, false};
-        graph.tensor_map[C] = {{Batch, M, N}, 0, {}, false, false};
+        graph.tensor_descr_map[A] = {{Batch, M, K}, NO_PRODUCER, {}, true, false};
+        graph.tensor_descr_map[B] = {{Batch, K, N}, NO_PRODUCER, {}, true, false};
+        graph.tensor_descr_map[C] = {{Batch, M, N}, 0, {}, false, false};
 
         MatmulNode matmulNode;
         matmulNode.name = "matmul1";
@@ -47,9 +47,9 @@ protected:
         matmulNode.output_tensors = {C};
 
         graph.nodes.push_back(matmulNode);
-        graph.tensor_map[C].producer_node_id = 0;
-        graph.tensor_map[A].consumer_node_ids = {0};
-        graph.tensor_map[B].consumer_node_ids = {0};
+        graph.tensor_descr_map[C].producer_node_id = 0;
+        graph.tensor_descr_map[A].consumer_node_ids = {0};
+        graph.tensor_descr_map[B].consumer_node_ids = {0};
 
         return graph;
     }

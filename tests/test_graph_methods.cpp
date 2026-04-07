@@ -14,14 +14,14 @@ protected:
         TensorID output = "output";
 
         // Входы
-        graph.tensor_map[input1] = {{2, 3}, NO_PRODUCER, {0}, true, false};
-        graph.tensor_map[input2] = {{2, 3}, NO_PRODUCER, {0}, true, false};
+        graph.tensor_descr_map[input1] = {{2, 3}, NO_PRODUCER, {0}, true, false};
+        graph.tensor_descr_map[input2] = {{2, 3}, NO_PRODUCER, {0}, true, false};
 
         // Промежуточный
-        graph.tensor_map[intermediate] = {{2, 3}, 0, {1}, false, false};
+        graph.tensor_descr_map[intermediate] = {{2, 3}, 0, {1}, false, false};
 
         // Выход
-        graph.tensor_map[output] = {{2, 3}, 1, {}, false, false};
+        graph.tensor_descr_map[output] = {{2, 3}, 1, {}, false, false};
 
         AddNode add;
         add.name = "add";
@@ -36,11 +36,11 @@ protected:
         graph.nodes.push_back(add);
         graph.nodes.push_back(mul);
 
-        graph.tensor_map[intermediate].producer_node_id = 0;
-        graph.tensor_map[output].producer_node_id = 1;
-        graph.tensor_map[input1].consumer_node_ids = {0, 1};
-        graph.tensor_map[input2].consumer_node_ids = {0};
-        graph.tensor_map[intermediate].consumer_node_ids = {1};
+        graph.tensor_descr_map[intermediate].producer_node_id = 0;
+        graph.tensor_descr_map[output].producer_node_id = 1;
+        graph.tensor_descr_map[input1].consumer_node_ids = {0, 1};
+        graph.tensor_descr_map[input2].consumer_node_ids = {0};
+        graph.tensor_descr_map[intermediate].consumer_node_ids = {1};
 
         return graph;
     }

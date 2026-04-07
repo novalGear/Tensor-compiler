@@ -36,7 +36,7 @@ inline std::string get_node_record_label(const ComputeNode& node) {
         if constexpr (std::is_same_v<T, ConstantNode>) return "Constant";
         else if constexpr (std::is_same_v<T, AddNode>) return "Add";
         else if constexpr (std::is_same_v<T, MulNode>) return "Mul";
-        else if constexpr (std::is_same_v<T, ReLUNode>) return "Relu";
+        else if constexpr (std::is_same_v<T, ReluNode>) return "Relu";
         else if constexpr (std::is_same_v<T, MatmulNode>) return "MatMul";
         else if constexpr (std::is_same_v<T, GemmNode>) return "Gemm";
         else if constexpr (std::is_same_v<T, ConvNode>) return "Conv";
@@ -65,7 +65,7 @@ inline std::string get_node_record_label(const ComputeNode& node) {
             ss << " | ";
             if (!n.name.empty()) ss << "name: \\\"" << escape_record(n.name) << "\\\" | ";
         }
-        else if constexpr (std::is_same_v<T, ReLUNode>) {
+        else if constexpr (std::is_same_v<T, ReluNode>) {
             ss << " | ";
             if (!n.name.empty()) ss << "name: \\\"" << escape_record(n.name) << "\\\" | ";
         }

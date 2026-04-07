@@ -11,7 +11,7 @@ TEST(ConstantEmitterStandalone, CreateScalar) {
 
     TensorID out = "out";
 
-    graph.tensor_map[out] = {{}, 0, {}, false, false};
+    graph.tensor_descr_map[out] = {{}, 0, {}, false, false};
 
     ConstantNode constNode;
     constNode.name = "const";
@@ -19,7 +19,7 @@ TEST(ConstantEmitterStandalone, CreateScalar) {
     constNode.value = {42.0f};
 
     graph.nodes.push_back(constNode);
-    graph.tensor_map[out].producer_node_id = 0;
+    graph.tensor_descr_map[out].producer_node_id = 0;
 
     MLIRGenerator::Config cfg;
     cfg.printMLIR = true;
@@ -33,7 +33,7 @@ TEST(ConstantEmitterStandalone, CreateTensor2x2) {
 
     TensorID out = "out";
 
-    graph.tensor_map[out] = {{2, 2}, 0, {}, false, false};
+    graph.tensor_descr_map[out] = {{2, 2}, 0, {}, false, false};
 
     ConstantNode constNode;
     constNode.name = "const";
@@ -41,7 +41,7 @@ TEST(ConstantEmitterStandalone, CreateTensor2x2) {
     constNode.value = {1.0f, 2.0f, 3.0f, 4.0f};
 
     graph.nodes.push_back(constNode);
-    graph.tensor_map[out].producer_node_id = 0;
+    graph.tensor_descr_map[out].producer_node_id = 0;
 
     MLIRGenerator::Config cfg;
     cfg.printMLIR = true;
@@ -58,13 +58,13 @@ TEST(ConstantEmitterStandalone, ConstAndAdd) {
     TensorID output = "output";
 
     // Вход
-    graph.tensor_map[input] = {{2, 2}, NO_PRODUCER, {1}, true, false};
+    graph.tensor_descr_map[input] = {{2, 2}, NO_PRODUCER, {1}, true, false};
 
     // Константа
-    graph.tensor_map[const_out] = {{2, 2}, 0, {1}, false, false};
+    graph.tensor_descr_map[const_out] = {{2, 2}, 0, {1}, false, false};
 
     // Выход
-    graph.tensor_map[output] = {{2, 2}, 1, {}, false, false};
+    graph.tensor_descr_map[output] = {{2, 2}, 1, {}, false, false};
 
     // Узел 0: Constant
     ConstantNode constNode;
@@ -81,10 +81,10 @@ TEST(ConstantEmitterStandalone, ConstAndAdd) {
     graph.nodes.push_back(constNode);
     graph.nodes.push_back(addNode);
 
-    graph.tensor_map[const_out].producer_node_id = 0;
-    graph.tensor_map[output].producer_node_id = 1;
-    graph.tensor_map[input].consumer_node_ids = {1};
-    graph.tensor_map[const_out].consumer_node_ids = {1};
+    graph.tensor_descr_map[const_out].producer_node_id = 0;
+    graph.tensor_descr_map[output].producer_node_id = 1;
+    graph.tensor_descr_map[input].consumer_node_ids = {1};
+    graph.tensor_descr_map[const_out].consumer_node_ids = {1};
 
     MLIRGenerator::Config cfg;
     cfg.printMLIR = true;

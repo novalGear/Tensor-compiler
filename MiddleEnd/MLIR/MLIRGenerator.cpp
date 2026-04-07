@@ -1,13 +1,11 @@
-// MLIRGenerator.cpp
+// MLIRGenerator.cpp - переписанный
 
-
-#include "../Pipeline/MLIRPasses.hpp"
 #include "MLIRGenerator.hpp"
 #include "TypeConverter.hpp"
 #include "OperationEmitters/AddEmitter.hpp"
 #include "OperationEmitters/MulEmitter.hpp"
 #include "OperationEmitters/ConstantEmitter.hpp"
-#include "OperationEmitters/ReLUEmitter.hpp"
+#include "OperationEmitters/ReluEmitter.hpp"
 #include "OperationEmitters/MatMulEmitter.hpp"
 
 #include "mlir/IR/BuiltinTypes.h"
@@ -20,14 +18,13 @@
 
 #include <fstream>
 #include <iostream>
-#include <queue>
-#include <set>
-#include <algorithm>
-
-#include "graph.hpp"
 
 namespace tcc {
 namespace mlir_gen {
+
+//==============================================================================
+// IMPL STRUCT
+//==============================================================================
 
 struct MLIRGenerator::Impl {
     mlir::MLIRContext context;
@@ -36,171 +33,161 @@ struct MLIRGenerator::Impl {
     mlir::func::FuncOp mainFunc;
     std::unordered_map<TensorID, mlir::Value> tensorMap;
     std::unique_ptr<TypeConverter> typeConverter;
-    const ComputeGraph* currentGraph = nullptr;
     Config config;
 
     // Эмиттеры
     std::unique_ptr<AddEmitter> addEmitter;
     std::unique_ptr<MulEmitter> mulEmitter;
     std::unique_ptr<ConstantEmitter> constantEmitter;
-    std::unique_ptr<ReLUEmitter> reluEmitter;
+    std::unique_ptr<ReluEmitter> reluEmitter;
     std::unique_ptr<MatMulEmitter> matmulEmitter;
 
     Impl(const Config& cfg) : config(cfg), builder(&context) {
+        loadDialects();
+        module = mlir::ModuleOp::create(mlir::UnknownLoc::get(&context));
+        builder = mlir::OpBuilder(module->getBodyRegion());
+        typeConverter = std::make_unique<TypeConverter>(&context);
+    }
+
+private:
+    void loadDialects() {
         context.getOrLoadDialect<mlir::BuiltinDialect>();
         context.getOrLoadDialect<mlir::func::FuncDialect>();
         context.getOrLoadDialect<mlir::arith::ArithDialect>();
         context.getOrLoadDialect<mlir::linalg::LinalgDialect>();
         context.getOrLoadDialect<mlir::tensor::TensorDialect>();
-
-        module = mlir::ModuleOp::create(mlir::UnknownLoc::get(&context));
-        builder = mlir::OpBuilder(module->getBodyRegion());
-        typeConverter = std::make_unique<TypeConverter>(&context);
     }
 };
 
+//==============================================================================
+// CONSTRUCTORS / DESTRUCTOR
+//==============================================================================
+
 MLIRGenerator::MLIRGenerator(const Config& cfg)
     : pImpl(std::make_unique<Impl>(cfg)) {
-    initMLIRContext();
     initEmitters();
 }
 
 MLIRGenerator::MLIRGenerator() : MLIRGenerator(Config()) {}
 MLIRGenerator::~MLIRGenerator() = default;
 
-void MLIRGenerator::initMLIRContext() {
-    // Диалекты уже загружены в конструкторе Impl
-}
-
 void MLIRGenerator::initEmitters() {
     pImpl->addEmitter = std::make_unique<AddEmitter>(pImpl->builder, pImpl->tensorMap);
     pImpl->mulEmitter = std::make_unique<MulEmitter>(pImpl->builder, pImpl->tensorMap);
     pImpl->constantEmitter = std::make_unique<ConstantEmitter>(pImpl->builder, pImpl->tensorMap);
-    pImpl->reluEmitter = std::make_unique<ReLUEmitter>(pImpl->builder, pImpl->tensorMap);
+    pImpl->reluEmitter = std::make_unique<ReluEmitter>(pImpl->builder, pImpl->tensorMap);
     pImpl->matmulEmitter = std::make_unique<MatMulEmitter>(pImpl->builder, pImpl->tensorMap);
 }
 
-bool MLIRGenerator::createFunctionArguments(const std::vector<TensorID>& inputs,
-                                             const std::vector<TensorID>& outputs) {
+//==============================================================================
+// DEBUG HELPERS
+//==============================================================================
+
+void MLIRGenerator::debugPrintTensorMap(const std::string& phase) {
+    std::cout << "[DEBUG] TensorMap " << phase << " (" << pImpl->tensorMap.size() << " entries):\n";
+    for (const auto& [name, val] : pImpl->tensorMap) {
+        std::cout << "  '" << name << "'\n";
+    }
+}
+
+void MLIRGenerator::debugPrintNode(size_t nodeId, const ComputeNode& node) {
+    std::visit([nodeId](const auto& n) {
+        std::cout << "[DEBUG] Node " << nodeId << " (" << n.getTypeName() << ")\n";
+        std::cout << "  Inputs: ";
+        for (const auto& in : n.input_tensors) std::cout << "'" << in << "' ";
+        std::cout << "\n  Outputs: ";
+        for (const auto& out : n.output_tensors) std::cout << "'" << out << "' ";
+        std::cout << "\n";
+    }, node);
+}
+
+//==============================================================================
+// FUNCTION CREATION
+//==============================================================================
+
+bool MLIRGenerator::createMainFunction(const ComputeGraph& graph) {
+    std::cout << "[DEBUG] === createMainFunction START ===\n";
+
+    auto inputs = graph.collectInputs();
+    if (inputs.empty()) {
+        std::cerr << "[ERROR] No inputs found in graph!\n";
+        return false;
+    }
+
+    auto outputs = graph.collectOutputs();
     auto loc = mlir::UnknownLoc::get(&pImpl->context);
 
-    llvm::SmallVector<mlir::Type> argTypes;
-    for (const auto& inputName : inputs) {
-        auto dims = pImpl->currentGraph->getTensorDims(inputName);  // <-- исправлено
-        auto tensorType = pImpl->typeConverter->toTensorType(dims);
-        argTypes.push_back(tensorType);
-    }
+    // Создаём типы
+    auto argTypes = createArgumentTypes(graph, inputs);
+    auto returnTypes = createReturnTypes(graph, outputs);
 
-    llvm::SmallVector<mlir::Type> returnTypes;
-    for (const auto& outputName : outputs) {
-        auto dims = pImpl->currentGraph->getTensorDims(outputName);  // <-- исправлено
-        auto tensorType = pImpl->typeConverter->toTensorType(dims);
-        returnTypes.push_back(tensorType);
-    }
-
+    // Создаём функцию
     auto funcType = mlir::FunctionType::get(&pImpl->context, argTypes, returnTypes);
-
     pImpl->mainFunc = pImpl->builder.create<mlir::func::FuncOp>(loc, "forward", funcType);
     pImpl->mainFunc.setPrivate();
+    pImpl->mainFunc.addEntryBlock();
+    pImpl->builder.setInsertionPointToStart(&pImpl->mainFunc.getBody().front());
 
-    mlir::Region& region = pImpl->mainFunc.getBody();
-    region.push_back(new mlir::Block);
-    mlir::Block& block = region.front();
-
-    pImpl->builder.setInsertionPointToStart(&block);
-
+    // Маппим входные аргументы
     for (size_t i = 0; i < inputs.size(); ++i) {
-        mlir::Value arg = block.getArgument(i);
-        pImpl->tensorMap[inputs[i]] = arg;
+        pImpl->tensorMap[inputs[i]] = pImpl->mainFunc.getArgument(i);
+        std::cout << "[DEBUG]   Mapped input: '" << inputs[i] << "' -> arg" << i << "\n";
     }
 
+    debugPrintTensorMap("after inputs");
     return true;
 }
 
-bool MLIRGenerator::createFunctionReturn(const std::vector<TensorID>& outputs) {
-    std::cout << "[DEBUG] createFunctionReturn START, outputs=" << outputs.size() << "\n";
+llvm::SmallVector<mlir::Type> MLIRGenerator::createArgumentTypes(
+    const ComputeGraph& graph, const std::vector<TensorID>& inputs) {
 
-    // Выводим содержимое tensorMap для отладки
-    std::cout << "[DEBUG] tensorMap contents:\n";
-    for (const auto& [name, val] : pImpl->tensorMap) {
-        std::cout << "    " << name << "\n";
+    llvm::SmallVector<mlir::Type> types;
+    for (const auto& inputName : inputs) {
+        auto dims = graph.getTensorDims(inputName);
+        types.push_back(pImpl->typeConverter->toTensorType(dims));
     }
+    return types;
+}
 
+llvm::SmallVector<mlir::Type> MLIRGenerator::createReturnTypes(
+    const ComputeGraph& graph, const std::vector<TensorID>& outputs) {
+
+    llvm::SmallVector<mlir::Type> types;
+    for (const auto& outputName : outputs) {
+        auto dims = graph.getTensorDims(outputName);
+        types.push_back(pImpl->typeConverter->toTensorType(dims));
+    }
+    return types;
+}
+
+bool MLIRGenerator::createFunctionReturn(const std::vector<TensorID>& outputs) {
     auto loc = mlir::UnknownLoc::get(&pImpl->context);
 
     llvm::SmallVector<mlir::Value> returnValues;
     for (const auto& outputName : outputs) {
         auto it = pImpl->tensorMap.find(outputName);
         if (it == pImpl->tensorMap.end()) {
-            std::cerr << "Error: Output tensor " << outputName << " not found in tensorMap\n";
+            std::cerr << "[ERROR] Output tensor '" << outputName << "' not found in tensorMap\n";
             return false;
         }
         returnValues.push_back(it->second);
-        std::cout << "[DEBUG]   returning " << outputName << "\n";
     }
 
     pImpl->builder.create<mlir::func::ReturnOp>(loc, returnValues);
+    std::cout << "[DEBUG] Created return with " << returnValues.size() << " values\n";
 
-    std::cout << "[DEBUG] createFunctionReturn END\n";
     return true;
 }
 
-bool MLIRGenerator::createMainFunction(const ComputeGraph& graph) {
-    std::cout << "[DEBUG] createMainFunction START\n";
-
-    auto inputs = graph.collectInputs();
-    auto outputs = graph.collectOutputs();
-
-    std::cout << "[DEBUG] inputs: " << inputs.size() << ", outputs: " << outputs.size() << "\n";
-
-    auto loc = mlir::UnknownLoc::get(&pImpl->context);
-
-    // Создаем типы аргументов
-    llvm::SmallVector<mlir::Type> argTypes;
-    for (const auto& inputName : inputs) {
-        auto dims = graph.getTensorDims(inputName);
-        auto tensorType = pImpl->typeConverter->toTensorType(dims);
-        argTypes.push_back(tensorType);
-        std::cout << "[DEBUG] Input " << inputName << " dims: " << dims.size() << "\n";
-    }
-
-    // Создаем типы возвращаемых значений
-    llvm::SmallVector<mlir::Type> returnTypes;
-    for (const auto& outputName : outputs) {
-        auto dims = graph.getTensorDims(outputName);
-        auto tensorType = pImpl->typeConverter->toTensorType(dims);
-        returnTypes.push_back(tensorType);
-        std::cout << "[DEBUG] Output " << outputName << " dims: " << dims.size() << "\n";
-    }
-
-    auto funcType = mlir::FunctionType::get(&pImpl->context, argTypes, returnTypes);
-
-    std::cout << "[DEBUG] Creating FuncOp...\n";
-    pImpl->mainFunc = pImpl->builder.create<mlir::func::FuncOp>(loc, "forward", funcType);
-    pImpl->mainFunc.setPrivate();
-
-    std::cout << "[DEBUG] Adding entry block...\n";
-    pImpl->mainFunc.addEntryBlock();
-
-    std::cout << "[DEBUG] Setting insertion point...\n";
-    pImpl->builder.setInsertionPointToStart(&pImpl->mainFunc.getBody().front());
-
-    // ВАЖНО: Добавляем входные тензоры в tensorMap
-    std::cout << "[DEBUG] Adding inputs to tensorMap...\n";
-    for (size_t i = 0; i < inputs.size(); ++i) {
-        mlir::Value arg = pImpl->mainFunc.getArgument(i);
-        pImpl->tensorMap[inputs[i]] = arg;
-        std::cout << "[DEBUG]   " << inputs[i] << " -> argument " << i << "\n";
-    }
-
-    std::cout << "[DEBUG] createMainFunction END\n";
-    return true;
-}
+//==============================================================================
+// NODE EMISSION
+//==============================================================================
 
 bool MLIRGenerator::emitNode(const ComputeGraph& graph, size_t nodeId, const ComputeNode& node) {
     return std::visit([this, &graph, nodeId](const auto& n) -> bool {
         using T = std::decay_t<decltype(n)>;
 
+        // Сбор входных значений
         std::vector<mlir::Value> inputs;
         for (const auto& inputName : n.input_tensors) {
             auto it = pImpl->tensorMap.find(inputName);
@@ -211,51 +198,36 @@ bool MLIRGenerator::emitNode(const ComputeGraph& graph, size_t nodeId, const Com
             inputs.push_back(it->second);
         }
 
-        std::vector<std::vector<size_t>> outputDimsList;
-        for (const auto& outputName : n.output_tensors) {
-            outputDimsList.push_back(graph.getTensorDims(outputName));
+        // Получение размерностей выхода
+        std::vector<size_t> outputDims;
+        if (!n.output_tensors.empty()) {
+            outputDims = graph.getTensorDims(n.output_tensors[0]);
         }
 
-        if (outputDimsList.empty()) {
-            std::cerr << "Error: No output dimensions for node " << nodeId << "\n";
-            return false;
-        }
-
+        // Эмиссия в зависимости от типа
         if constexpr (std::is_same_v<T, ConstantNode>) {
             std::cout << "[DEBUG] Emitting ConstantNode\n";
-            pImpl->constantEmitter->emitConstant(n.value, n.output_tensors, outputDimsList[0]);
+            pImpl->constantEmitter->emitConstant(n.value, n.output_tensors, outputDims);
         }
         else if constexpr (std::is_same_v<T, AddNode>) {
             std::cout << "[DEBUG] Emitting AddNode\n";
-            if (inputs.size() != 2) {
-                std::cerr << "AddNode requires 2 inputs, got " << inputs.size() << "\n";
-                return false;
-            }
-            pImpl->addEmitter->emit(inputs, n.output_tensors, outputDimsList[0]);
+            if (inputs.size() != 2) return false;
+            pImpl->addEmitter->emit(inputs, n.output_tensors, outputDims);
         }
         else if constexpr (std::is_same_v<T, MulNode>) {
             std::cout << "[DEBUG] Emitting MulNode\n";
-            if (inputs.size() != 2) {
-                std::cerr << "MulNode requires 2 inputs, got " << inputs.size() << "\n";
-                return false;
-            }
-            pImpl->mulEmitter->emit(inputs, n.output_tensors, outputDimsList[0]);
+            if (inputs.size() != 2) return false;
+            pImpl->mulEmitter->emit(inputs, n.output_tensors, outputDims);
         }
-        else if constexpr (std::is_same_v<T, ReLUNode>) {
+        else if constexpr (std::is_same_v<T, ReluNode>) {
             std::cout << "[DEBUG] Emitting ReluNode\n";
-            if (inputs.size() != 1) {
-                std::cerr << "ReluNode requires 1 input, got " << inputs.size() << "\n";
-                return false;
-            }
-            pImpl->reluEmitter->emit(inputs, n.output_tensors, outputDimsList[0]);
+            if (inputs.size() != 1) return false;
+            pImpl->reluEmitter->emit(inputs, n.output_tensors, outputDims);
         }
         else if constexpr (std::is_same_v<T, MatmulNode>) {
             std::cout << "[DEBUG] Emitting MatmulNode\n";
-            if (inputs.size() != 2) {
-                std::cerr << "MatmulNode requires 2 inputs, got " << inputs.size() << "\n";
-                return false;
-            }
-            pImpl->matmulEmitter->emit(inputs, n.output_tensors, outputDimsList[0]);
+            if (inputs.size() != 2) return false;
+            pImpl->matmulEmitter->emit(inputs, n.output_tensors, outputDims);
         }
         else {
             std::cerr << "Error: Unsupported node type\n";
@@ -266,35 +238,84 @@ bool MLIRGenerator::emitNode(const ComputeGraph& graph, size_t nodeId, const Com
     }, node);
 }
 
+bool MLIRGenerator::validateInputs(const std::vector<TensorID>& inputTensors) {
+    for (const auto& inputName : inputTensors) {
+        if (pImpl->tensorMap.find(inputName) == pImpl->tensorMap.end()) {
+            std::cerr << "[ERROR] Input tensor '" << inputName << "' not found in tensorMap\n";
+            debugPrintTensorMap("before error");
+            return false;
+        }
+    }
+    return true;
+}
+
+std::vector<mlir::Value> MLIRGenerator::collectInputValues(const std::vector<TensorID>& inputTensors) {
+    std::vector<mlir::Value> inputs;
+    inputs.reserve(inputTensors.size());
+    for (const auto& inputName : inputTensors) {
+        inputs.push_back(pImpl->tensorMap[inputName]);
+    }
+    return inputs;
+}
+
+std::vector<std::vector<size_t>> MLIRGenerator::collectOutputDims(
+    const ComputeGraph& graph, const std::vector<TensorID>& outputTensors) {
+
+    std::vector<std::vector<size_t>> dimsList;
+    for (const auto& outputName : outputTensors) {
+        dimsList.push_back(graph.getTensorDims(outputName));
+    }
+    return dimsList;
+}
+
+//==============================================================================
+// MAIN GENERATION
+//==============================================================================
+
 bool MLIRGenerator::generate(const ComputeGraph& graph) {
-    // ... существующий код до верификации ...
+    std::cout << "\n============================================================\n";
+    std::cout << "MLIR GENERATION START\n";
+    std::cout << "============================================================\n\n";
+
+    if (!createMainFunction(graph)) {
+        std::cerr << "[ERROR] Failed to create main function\n";
+        return false;
+    }
+
+    auto order = graph.topologicalSort(true);
+    std::cout << "[DEBUG] Topological order: ";
+    for (auto id : order) std::cout << id << " ";
+    std::cout << "\n\n";
+
+    for (size_t nodeId : order) {
+        if (!emitNode(graph, nodeId, graph.nodes[nodeId])) {
+            std::cerr << "[ERROR] Failed to emit node " << nodeId << "\n";
+            return false;
+        }
+        debugPrintTensorMap("after node " + std::to_string(nodeId));
+    }
+
+    auto outputs = graph.collectOutputs();
+    if (!createFunctionReturn(outputs)) {
+        std::cerr << "[ERROR] Failed to create function return\n";
+        return false;
+    }
 
     if (mlir::failed(mlir::verify(*pImpl->module))) {
-        std::cerr << "Error: MLIR module verification failed\n";
+        std::cerr << "[ERROR] MLIR verification failed\n";
         return false;
     }
 
-    // ============================================================
-    // НОВОЕ: Понижение MLIR до LLVM диалекта
-    // ============================================================
-    std::cout << "[DEBUG] Running lowering pipeline...\n";
-    MLIRPasses passes;
-    if (!passes.runLoweringPipeline(*pImpl->module)) {
-        std::cerr << "Error: Lowering pipeline failed\n";
-        return false;
-    }
-    std::cout << "[DEBUG] Lowering pipeline completed\n";
-
-    if (pImpl->config.printMLIR) {
-        printMLIRToStream(std::cout);
-    }
-
-    if (!pImpl->config.outputFile.empty()) {
-        saveMLIRToFile(pImpl->config.outputFile);
-    }
+    std::cout << "\n============================================================\n";
+    std::cout << "MLIR GENERATION SUCCESS\n";
+    std::cout << "============================================================\n";
 
     return true;
 }
+
+//==============================================================================
+// OUTPUT
+//==============================================================================
 
 mlir::OwningOpRef<mlir::ModuleOp> MLIRGenerator::takeModule() {
     return std::move(pImpl->module);

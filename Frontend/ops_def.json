@@ -27,7 +27,7 @@
   },
   {
     "op_type": "Relu",
-    "cpp_name": "ReLUNode",
+    "cpp_name": "ReluNode",
     "attributes": []
   },
   {

@@ -157,7 +157,7 @@ module NodeGenerator
     real_ops = data.reject { |op| op['op_type'] == 'CommonFields' }
 
     colors = {
-      "Add" => "#E3F2FD", "Mul" => "#E8F5E9", "ReLU" => "#FFF3E0",
+      "Add" => "#E3F2FD", "Mul" => "#E8F5E9", "Relu" => "#FFF3E0",
       "MatMul" => "#F3E5F5", "Gemm" => "#EFEBE9", "Conv" => "#E0F7FA",
       "Constant" => "#FAFAFA", "Reshape" => "#FFFDE7", "Transpose" => "#FCE4EC",
       "Unknown" => "#EEEEEE"

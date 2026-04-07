@@ -57,7 +57,7 @@ inline ComputeNode create_Mul_node(const onnx::NodeProto& proto) {
     return node;
 }
 
-inline void parse_attributes(ReLUNode& node, const onnx::NodeProto& proto) {
+inline void parse_attributes(ReluNode& node, const onnx::NodeProto& proto) {
     for (const auto& attr : proto.attribute()) {
         const std::string& attr_name = attr.name();
         // No attributes
@@ -65,7 +65,7 @@ inline void parse_attributes(ReLUNode& node, const onnx::NodeProto& proto) {
 }
 
 inline ComputeNode create_Relu_node(const onnx::NodeProto& proto) {
-    ReLUNode node;
+    ReluNode node;
     node.name = proto.name();
     node.input_tensors.assign(proto.input().begin(), proto.input().end());
     node.output_tensors.assign(proto.output().begin(), proto.output().end());
