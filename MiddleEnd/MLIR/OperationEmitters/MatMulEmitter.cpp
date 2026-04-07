@@ -3,6 +3,10 @@
 #include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
 
+#include "plog/Log.h"
+
+#include <iostream>
+
 namespace tcc {
 namespace mlir_gen {
 
@@ -10,10 +14,19 @@ mlir::Value MatMulEmitter::emit(const std::vector<mlir::Value>& inputs,
                                  const std::vector<std::string>& outputNames,
                                  const std::vector<size_t>& outputDims) {
 
+    PLOG_DEBUG << "[MatMulEmitter] START emit\n";
+    PLOG_DEBUG << "[MatMulEmitter] outputNames[0] = " << outputNames[0] << "\n";
+    PLOG_DEBUG << "[MatMulEmitter] outputDims size = " << outputDims.size() << "\n";
+
     auto loc = mlir::UnknownLoc::get(builder.getContext());
 
     if (inputs.size() != 2) {
         llvm::errs() << "MatMul operation requires exactly 2 inputs\n";
+        return nullptr;
+    }
+
+    if (outputNames.empty()) {
+        llvm::errs() << "MatMul requires at least one output name\n";
         return nullptr;
     }
 
@@ -38,7 +51,6 @@ mlir::Value MatMulEmitter::emit(const std::vector<mlir::Value>& inputs,
     mlir::Value result;
 
     if (rank == 2) {
-        // 2D матричное умножение
         auto matmulOp = builder.create<mlir::linalg::MatmulOp>(
             loc, mlir::TypeRange(resultType),
             mlir::ValueRange({lhs, rhs}),
@@ -46,7 +58,6 @@ mlir::Value MatMulEmitter::emit(const std::vector<mlir::Value>& inputs,
         result = matmulOp.getResult(0);
     }
     else if (rank == 3) {
-        // 3D batch матричное умножение
         auto batchMatmulOp = builder.create<mlir::linalg::BatchMatmulOp>(
             loc, mlir::TypeRange(resultType),
             mlir::ValueRange({lhs, rhs}),
@@ -54,11 +65,13 @@ mlir::Value MatMulEmitter::emit(const std::vector<mlir::Value>& inputs,
         result = batchMatmulOp.getResult(0);
     }
     else {
-        llvm::errs() << "Unsupported rank for MatMul: " << rank << "\n";
+        PLOG_DEBUG << "Unsupported rank for MatMul: " << rank;
         return nullptr;
     }
 
+    PLOG_DEBUG << "[MatMulEmitter] Saving output '" << outputNames[0] << "' to tensorMap\n";
     tensorMap[outputNames[0]] = result;
+
     return result;
 }
 

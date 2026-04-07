@@ -63,6 +63,7 @@ private:
     void update_tensor_connections(NodeID node_id, const ComputeNode& node);
     void fill_tensor_shapes(const onnx::GraphProto& gp);
 
+
     void create_constant_nodes_from_initializers(const onnx::GraphProto& gp);
     static std::vector<float> extractInitializerData(const onnx::TensorProto& initializer);
     void updateTensorMapForConstant(const std::string& tensor_name,
@@ -70,6 +71,21 @@ private:
                                      const onnx::TensorProto& initializer);
 
     static std::string getNodeTypeName(const ComputeNode& node);
+
+    void inferAllTensorShapes();
+
+    // void inferNodeShapes();
+    void inferMatMulShape(const MatmulNode& node, const TensorID& outputTensor);
+    void inferAddShape(const AddNode& node, const TensorID& outputTensor);
+    void inferMulShape(const MulNode& node, const TensorID& outputTensor);
+    void inferReluShape(const ReluNode& node, const TensorID& outputTensor);
+    void inferGemmShape(const GemmNode& node, const TensorID& outputTensor);
+    void inferConvShape(const ConvNode& node, const TensorID& outputTensor);
+    void inferFlattenShape(const FlattenNode& node, const TensorID& outputTensor);
+
+    std::vector<size_t> broadcastDims(const std::vector<size_t>& a, const std::vector<size_t>& b);
+    void setTensorDims(const TensorID& tensor, const std::vector<size_t>& dims);
+    bool needsShapeInference(const TensorID& tensor) const;
 };
 
 } // namespace tcc

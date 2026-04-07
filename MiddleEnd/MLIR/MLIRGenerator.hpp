@@ -40,7 +40,7 @@ public:
     mlir::OwningOpRef<mlir::ModuleOp> takeModule();
     void printMLIRToStream(std::ostream& os);
     bool saveMLIRToFile(const std::string& filename);
-
+    void printTensorMap() const;
 private:
     void initMLIRContext();
     void initEmitters();

@@ -4,6 +4,8 @@
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
 #include "mlir/IR/BuiltinAttributes.h"
 
+#include "plog/Log.h"
+
 #include <iostream>
 
 namespace tcc {
@@ -24,7 +26,7 @@ mlir::Value ConstantEmitter::emit(const std::vector<mlir::Value>& inputs,
 mlir::Value ConstantEmitter::emitConstant(const std::vector<float>& values,
                                            const std::vector<std::string>& outputNames,
                                            const std::vector<size_t>& outputDims) {
-    std::cout << "[DEBUG] ConstantEmitter: creating constant for " << outputNames[0] << "\n";
+    PLOG_DEBUG << "[DEBUG] ConstantEmitter: creating constant for " << outputNames[0] << "\n";
 
     auto loc = mlir::UnknownLoc::get(builder.getContext());
 
@@ -49,7 +51,7 @@ mlir::Value ConstantEmitter::emitConstant(const std::vector<float>& values,
 
     // СОХРАНЯЕМ В tensorMap
     tensorMap[outputNames[0]] = constantOp.getResult();
-    std::cout << "[DEBUG] ConstantEmitter: saved " << outputNames[0] << " to tensorMap\n";
+    PLOG_DEBUG << "[DEBUG] ConstantEmitter: saved " << outputNames[0] << " to tensorMap\n";
 
     return constantOp.getResult();
 }

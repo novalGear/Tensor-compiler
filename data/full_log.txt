@@ -266,8 +266,6 @@ Step 9: Pop node 4 [Add]
 [DEBUG] Node 0
   Inputs: 'input' 'weight'
   Outputs: '/MatMul_output_0'
-
-
 [DEBUG] Emitting MatmulNode
 [DEBUG] TensorMap after node 0 (5 entries):
   'add_const'

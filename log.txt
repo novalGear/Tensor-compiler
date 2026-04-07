@@ -1,0 +1,686 @@
+Loading ONNX model: ./data/test_model.onnx
+[Info] Loading ONNX model from: ./data/test_model.onnx
+[Info] Created ConstantNode for: weight (size: 0, node_id: 5)
+[Info] Created ConstantNode for: bias (size: 0, node_id: 6)
+[Info] Created ConstantNode for: scale (size: 0, node_id: 7)
+[Info] Created ConstantNode for: add_const (size: 0, node_id: 8)
+
+============================================================
+COMPUTE GRAPH DIAGNOSTICS
+============================================================
+
+📊 Summary:
+  Nodes: 9
+  Tensors: 10
+
+=== Graph Inputs (1) ===
+  input dims: [1 10 ]
+
+=== Graph Outputs (1) ===
+  output
+
+=== Tensor Map (JSON) ===
+{
+  "tensors": [
+    {
+      "name": "output",
+      "dims": [],
+      "producer": 4,
+      "producer_type": "Add",
+      "consumers_count": 0,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "/Relu_output_0",
+      "dims": [],
+      "producer": 2,
+      "producer_type": "Relu",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "/Add_output_0",
+      "dims": [],
+      "producer": 1,
+      "producer_type": "Add",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "/MatMul_output_0",
+      "dims": [],
+      "producer": 0,
+      "producer_type": "MatMul",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "add_const",
+      "dims": [5],
+      "producer": 8,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "bias",
+      "dims": [5],
+      "producer": 6,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "/Mul_output_0",
+      "dims": [],
+      "producer": 3,
+      "producer_type": "Mul",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "weight",
+      "dims": [10, 5],
+      "producer": 5,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "scale",
+      "dims": [5],
+      "producer": 7,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "input",
+      "dims": [1, 10],
+      "producer": null,
+      "producer_type": null,
+      "consumers_count": 1,
+      "is_graph_input": true,
+      "is_initializer": false
+    }
+  ]
+}
+
+=== Nodes ===
+  Node 0: name='/MatMul', type=MatMul, inputs: [input, weight], outputs: [/MatMul_output_0]
+  Node 1: name='/Add', type=Add, inputs: [/MatMul_output_0, bias], outputs: [/Add_output_0]
+  Node 2: name='/Relu', type=Relu, inputs: [/Add_output_0], outputs: [/Relu_output_0]
+  Node 3: name='/Mul', type=Mul, inputs: [/Relu_output_0, scale], outputs: [/Mul_output_0]
+  Node 4: name='/Add_1', type=Add, inputs: [/Mul_output_0, add_const], outputs: [output]
+  Node 5: name='weight_const', type=Constant, inputs: [], outputs: [weight], value_size: 50
+  Node 6: name='bias_const', type=Constant, inputs: [], outputs: [bias], value_size: 5
+  Node 7: name='scale_const', type=Constant, inputs: [], outputs: [scale], value_size: 5
+  Node 8: name='add_const_const', type=Constant, inputs: [], outputs: [add_const], value_size: 5
+
+============================================================
+
+============================================================
+MLIR GENERATION START
+============================================================
+
+[DEBUG] === createMainFunction START ===
+[DEBUG]   Mapped input: 'input' -> arg0
+[DEBUG] TensorMap after inputs (1 entries):
+  'input'
+
+=== Kahn's Algorithm (BFS Topological Sort) ===
+Initial queue (nodes with inDegree=0): 5[Const] 6[Const] 7[Const] 8[Const]
+
+Step 1: Pop node 5 [Const]
+  Order so far: [5]
+  Processing outgoing edges: 0 (inDegree now 0) → queued
+  Queue now: 6[Const] 7[Const] 8[Const] 0[MatMul]
+
+Step 2: Pop node 6 [Const]
+  Order so far: [5, 6]
+  Processing outgoing edges: 1 (inDegree now 1)
+  Queue now: 7[Const] 8[Const] 0[MatMul]
+
+Step 3: Pop node 7 [Const]
+  Order so far: [5, 6, 7]
+  Processing outgoing edges: 3 (inDegree now 1)
+  Queue now: 8[Const] 0[MatMul]
+
+Step 4: Pop node 8 [Const]
+  Order so far: [5, 6, 7, 8]
+  Processing outgoing edges: 4 (inDegree now 1)
+  Queue now: 0[MatMul]
+
+Step 5: Pop node 0 [MatMul]
+  Order so far: [5, 6, 7, 8, 0]
+  Processing outgoing edges: 1 (inDegree now 0) → queued
+  Queue now: 1[Add]
+
+Step 6: Pop node 1 [Add]
+  Order so far: [5, 6, 7, 8, 0, 1]
+  Processing outgoing edges: 2 (inDegree now 0) → queued
+  Queue now: 2[Relu]
+
+Step 7: Pop node 2 [Relu]
+  Order so far: [5, 6, 7, 8, 0, 1, 2]
+  Processing outgoing edges: 3 (inDegree now 0) → queued
+  Queue now: 3[Mul]
+
+Step 8: Pop node 3 [Mul]
+  Order so far: [5, 6, 7, 8, 0, 1, 2, 3]
+  Processing outgoing edges: 4 (inDegree now 0) → queued
+  Queue now: 4[Add]
+
+Step 9: Pop node 4 [Add]
+  Order so far: [5, 6, 7, 8, 0, 1, 2, 3, 4]
+
+[DEBUG] Topological order: 5 6 7 8 0 1 2 3 4
+
+[DEBUG] Node 5
+  Inputs:
+  Outputs: 'weight'
+[DEBUG] Emitting ConstantNode
+[DEBUG] ConstantEmitter: creating constant for weight
+[DEBUG] ConstantEmitter: saved weight to tensorMap
+[DEBUG] TensorMap after node 5 (2 entries):
+  'weight'
+  'input'
+[DEBUG] Node 6
+  Inputs:
+  Outputs: 'bias'
+[DEBUG] Emitting ConstantNode
+[DEBUG] ConstantEmitter: creating constant for bias
+[DEBUG] ConstantEmitter: saved bias to tensorMap
+[DEBUG] TensorMap after node 6 (3 entries):
+  'bias'
+  'weight'
+  'input'
+[DEBUG] Node 7
+  Inputs:
+  Outputs: 'scale'
+[DEBUG] Emitting ConstantNode
+[DEBUG] ConstantEmitter: creating constant for scale
+[DEBUG] ConstantEmitter: saved scale to tensorMap
+[DEBUG] TensorMap after node 7 (4 entries):
+  'bias'
+  'weight'
+  'scale'
+  'input'
+[DEBUG] Node 8
+  Inputs:
+  Outputs: 'add_const'
+[DEBUG] Emitting ConstantNode
+[DEBUG] ConstantEmitter: creating constant for add_const
+[DEBUG] ConstantEmitter: saved add_const to tensorMap
+[DEBUG] TensorMap after node 8 (5 entries):
+  'add_const'
+  'bias'
+  'weight'
+  'scale'
+  'input'
+
+
+
+[DEBUG] Node 0
+  Inputs: 'input' 'weight'
+  Outputs: '/MatMul_output_0'
+[DEBUG] Emitting MatmulNode
+[MatMulEmitter] START emit
+[MatMulEmitter] outputNames[0] = /MatMul_output_0
+[MatMulEmitter] outputDims size = 0
+[DEBUG] TensorMap after node 0 (5 entries):
+  'add_const'
+  'bias'
+  'weight'
+  'scale'
+  'input'
+[DEBUG] Node 1
+  Inputs: '/MatMul_output_0' 'bias'
+  Outputs: '/Add_output_0'
+[DEBUG] TensorMap before error (5 entries):
+  'add_const'
+  'bias'
+  'weight'
+  'scale'
+  'input'
+[Info] Loading ONNX model from: ./data/test_model.onnx
+[Info] Created ConstantNode for: weight (size: 0, node_id: 5)
+[Info] Created ConstantNode for: bias (size: 0, node_id: 6)
+[Info] Created ConstantNode for: scale (size: 0, node_id: 7)
+[Info] Created ConstantNode for: add_const (size: 0, node_id: 8)
+
+============================================================
+COMPUTE GRAPH DIAGNOSTICS
+============================================================
+
+📊 Summary:
+  Nodes: 9
+  Tensors: 10
+
+=== Graph Inputs (1) ===
+  input dims: [1 10 ]
+
+=== Graph Outputs (1) ===
+  output
+
+=== Tensor Map (JSON) ===
+{
+  "tensors": [
+    {
+      "name": "output",
+      "dims": [],
+      "producer": 4,
+      "producer_type": "Add",
+      "consumers_count": 0,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "/Relu_output_0",
+      "dims": [],
+      "producer": 2,
+      "producer_type": "Relu",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "/Add_output_0",
+      "dims": [],
+      "producer": 1,
+      "producer_type": "Add",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "/MatMul_output_0",
+      "dims": [],
+      "producer": 0,
+      "producer_type": "MatMul",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "add_const",
+      "dims": [5],
+      "producer": 8,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "bias",
+      "dims": [5],
+      "producer": 6,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "/Mul_output_0",
+      "dims": [],
+      "producer": 3,
+      "producer_type": "Mul",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "weight",
+      "dims": [10, 5],
+      "producer": 5,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "scale",
+      "dims": [5],
+      "producer": 7,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "input",
+      "dims": [1, 10],
+      "producer": null,
+      "producer_type": null,
+      "consumers_count": 1,
+      "is_graph_input": true,
+      "is_initializer": false
+    }
+  ]
+}
+
+=== Nodes ===
+  Node 0: name='/MatMul', type=MatMul, inputs: [input, weight], outputs: [/MatMul_output_0]
+  Node 1: name='/Add', type=Add, inputs: [/MatMul_output_0, bias], outputs: [/Add_output_0]
+  Node 2: name='/Relu', type=Relu, inputs: [/Add_output_0], outputs: [/Relu_output_0]
+  Node 3: name='/Mul', type=Mul, inputs: [/Relu_output_0, scale], outputs: [/Mul_output_0]
+  Node 4: name='/Add_1', type=Add, inputs: [/Mul_output_0, add_const], outputs: [output]
+  Node 5: name='weight_const', type=Constant, inputs: [], outputs: [weight], value_size: 50
+  Node 6: name='bias_const', type=Constant, inputs: [], outputs: [bias], value_size: 5
+  Node 7: name='scale_const', type=Constant, inputs: [], outputs: [scale], value_size: 5
+  Node 8: name='add_const_const', type=Constant, inputs: [], outputs: [add_const], value_size: 5
+
+============================================================
+
+=== Kahn's Algorithm (BFS Topological Sort) ===
+Initial queue (nodes with inDegree=0): 5[Const] 6[Const] 7[Const] 8[Const]
+
+Step 1: Pop node 5 [Const]
+  Order so far: [5]
+  Processing outgoing edges: 0 (inDegree now 0) → queued
+  Queue now: 6[Const] 7[Const] 8[Const] 0[MatMul]
+
+Step 2: Pop node 6 [Const]
+  Order so far: [5, 6]
+  Processing outgoing edges: 1 (inDegree now 1)
+  Queue now: 7[Const] 8[Const] 0[MatMul]
+
+Step 3: Pop node 7 [Const]
+  Order so far: [5, 6, 7]
+  Processing outgoing edges: 3 (inDegree now 1)
+  Queue now: 8[Const] 0[MatMul]
+
+Step 4: Pop node 8 [Const]
+  Order so far: [5, 6, 7, 8]
+  Processing outgoing edges: 4 (inDegree now 1)
+  Queue now: 0[MatMul]
+
+Step 5: Pop node 0 [MatMul]
+  Order so far: [5, 6, 7, 8, 0]
+  Processing outgoing edges: 1 (inDegree now 0) → queued
+  Queue now: 1[Add]
+
+Step 6: Pop node 1 [Add]
+  Order so far: [5, 6, 7, 8, 0, 1]
+  Processing outgoing edges: 2 (inDegree now 0) → queued
+  Queue now: 2[Relu]
+
+Step 7: Pop node 2 [Relu]
+  Order so far: [5, 6, 7, 8, 0, 1, 2]
+  Processing outgoing edges: 3 (inDegree now 0) → queued
+  Queue now: 3[Mul]
+
+Step 8: Pop node 3 [Mul]
+  Order so far: [5, 6, 7, 8, 0, 1, 2, 3]
+  Processing outgoing edges: 4 (inDegree now 0) → queued
+  Queue now: 4[Add]
+
+Step 9: Pop node 4 [Add]
+  Order so far: [5, 6, 7, 8, 0, 1, 2, 3, 4]
+
+[Info] Loading ONNX model from: ./data/test_model.onnx
+
+=== Kahn's Algorithm (BFS Topological Sort) ===
+Initial queue (nodes with inDegree=0): 0[MatMul] 
+
+Step 1: Pop node 0 [MatMul]
+  Order so far: [0]
+  Processing outgoing edges: 1 (inDegree now 0) → queued 
+  Queue now: 1[Add] 
+
+Step 2: Pop node 1 [Add]
+  Order so far: [0, 1]
+  Processing outgoing edges: 2 (inDegree now 0) → queued 
+  Queue now: 2[Relu] 
+
+Step 3: Pop node 2 [Relu]
+  Order so far: [0, 1, 2]
+  Processing outgoing edges: 3 (inDegree now 0) → queued 
+  Queue now: 3[Mul] 
+
+Step 4: Pop node 3 [Mul]
+  Order so far: [0, 1, 2, 3]
+  Processing outgoing edges: 4 (inDegree now 0) → queued 
+  Queue now: 4[Add] 
+
+Step 5: Pop node 4 [Add]
+  Order so far: [0, 1, 2, 3, 4]
+
+[Info] Created ConstantNode for: weight (size: 0, node_id: 5)
+[Info] Created ConstantNode for: bias (size: 0, node_id: 6)
+[Info] Created ConstantNode for: scale (size: 0, node_id: 7)
+[Info] Created ConstantNode for: add_const (size: 0, node_id: 8)
+
+============================================================
+COMPUTE GRAPH DIAGNOSTICS
+============================================================
+
+📊 Summary:
+  Nodes: 9
+  Tensors: 10
+
+=== Graph Inputs (1) ===
+  input dims: [1 10 ]
+
+=== Graph Outputs (1) ===
+  output dims: [1 5 ]
+
+=== Tensor Map (JSON) ===
+{
+  "tensors": [
+    {
+      "name": "output",
+      "dims": [1, 5],
+      "producer": 4,
+      "producer_type": "Add",
+      "consumers_count": 0,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "/Relu_output_0",
+      "dims": [1, 5],
+      "producer": 2,
+      "producer_type": "Relu",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "/Add_output_0",
+      "dims": [1, 5],
+      "producer": 1,
+      "producer_type": "Add",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "/MatMul_output_0",
+      "dims": [1, 5],
+      "producer": 0,
+      "producer_type": "MatMul",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "add_const",
+      "dims": [5],
+      "producer": 8,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "bias",
+      "dims": [5],
+      "producer": 6,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "/Mul_output_0",
+      "dims": [1, 5],
+      "producer": 3,
+      "producer_type": "Mul",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": false
+    },
+    {
+      "name": "weight",
+      "dims": [10, 5],
+      "producer": 5,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "scale",
+      "dims": [5],
+      "producer": 7,
+      "producer_type": "Constant",
+      "consumers_count": 1,
+      "is_graph_input": false,
+      "is_initializer": true
+    },
+    {
+      "name": "input",
+      "dims": [1, 10],
+      "producer": null,
+      "producer_type": null,
+      "consumers_count": 1,
+      "is_graph_input": true,
+      "is_initializer": false
+    }
+  ]
+}
+
+=== Nodes ===
+  Node 0: name='/MatMul', type=MatMul, inputs: [input, weight], outputs: [/MatMul_output_0]
+  Node 1: name='/Add', type=Add, inputs: [/MatMul_output_0, bias], outputs: [/Add_output_0]
+  Node 2: name='/Relu', type=Relu, inputs: [/Add_output_0], outputs: [/Relu_output_0]
+  Node 3: name='/Mul', type=Mul, inputs: [/Relu_output_0, scale], outputs: [/Mul_output_0]
+  Node 4: name='/Add_1', type=Add, inputs: [/Mul_output_0, add_const], outputs: [output]
+  Node 5: name='weight_const', type=Constant, inputs: [], outputs: [weight], value_size: 50
+  Node 6: name='bias_const', type=Constant, inputs: [], outputs: [bias], value_size: 5
+  Node 7: name='scale_const', type=Constant, inputs: [], outputs: [scale], value_size: 5
+  Node 8: name='add_const_const', type=Constant, inputs: [], outputs: [add_const], value_size: 5
+
+============================================================
+  'input' -> valid Value, type: 
+
+=== Kahn's Algorithm (BFS Topological Sort) ===
+Initial queue (nodes with inDegree=0): 5[Const] 6[Const] 7[Const] 8[Const] 
+
+Step 1: Pop node 5 [Const]
+  Order so far: [5]
+  Processing outgoing edges: 0 (inDegree now 0) → queued 
+  Queue now: 6[Const] 7[Const] 8[Const] 0[MatMul] 
+
+Step 2: Pop node 6 [Const]
+  Order so far: [5, 6]
+  Processing outgoing edges: 1 (inDegree now 1) 
+  Queue now: 7[Const] 8[Const] 0[MatMul] 
+
+Step 3: Pop node 7 [Const]
+  Order so far: [5, 6, 7]
+  Processing outgoing edges: 3 (inDegree now 1) 
+  Queue now: 8[Const] 0[MatMul] 
+
+Step 4: Pop node 8 [Const]
+  Order so far: [5, 6, 7, 8]
+  Processing outgoing edges: 4 (inDegree now 1) 
+  Queue now: 0[MatMul] 
+
+Step 5: Pop node 0 [MatMul]
+  Order so far: [5, 6, 7, 8, 0]
+  Processing outgoing edges: 1 (inDegree now 0) → queued 
+  Queue now: 1[Add] 
+
+Step 6: Pop node 1 [Add]
+  Order so far: [5, 6, 7, 8, 0, 1]
+  Processing outgoing edges: 2 (inDegree now 0) → queued 
+  Queue now: 2[Relu] 
+
+Step 7: Pop node 2 [Relu]
+  Order so far: [5, 6, 7, 8, 0, 1, 2]
+  Processing outgoing edges: 3 (inDegree now 0) → queued 
+  Queue now: 3[Mul] 
+
+Step 8: Pop node 3 [Mul]
+  Order so far: [5, 6, 7, 8, 0, 1, 2, 3]
+  Processing outgoing edges: 4 (inDegree now 0) → queued 
+  Queue now: 4[Add] 
+
+Step 9: Pop node 4 [Add]
+  Order so far: [5, 6, 7, 8, 0, 1, 2, 3, 4]
+
+  'weight' -> valid Value, type: 
+  'input' -> valid Value, type: 
+  'bias' -> valid Value, type: 
+  'weight' -> valid Value, type: 
+  'input' -> valid Value, type: 
+  'bias' -> valid Value, type: 
+  'weight' -> valid Value, type: 
+  'scale' -> valid Value, type: 
+  'input' -> valid Value, type: 
+  'add_const' -> valid Value, type: 
+  'bias' -> valid Value, type: 
+  'weight' -> valid Value, type: 
+  'scale' -> valid Value, type: 
+  'input' -> valid Value, type: 
+  '/MatMul_output_0' -> valid Value, type: 
+  'add_const' -> valid Value, type: 
+  'bias' -> valid Value, type: 
+  'weight' -> valid Value, type: 
+  'scale' -> valid Value, type: 
+  'input' -> valid Value, type: 
+  '/Add_output_0' -> valid Value, type: 
+  '/MatMul_output_0' -> valid Value, type: 
+  'add_const' -> valid Value, type: 
+  'bias' -> valid Value, type: 
+  'weight' -> valid Value, type: 
+  'scale' -> valid Value, type: 
+  'input' -> valid Value, type: 
+  '/Relu_output_0' -> valid Value, type: 
+  '/Add_output_0' -> valid Value, type: 
+  '/MatMul_output_0' -> valid Value, type: 
+  'add_const' -> valid Value, type: 
+  'bias' -> valid Value, type: 
+  'weight' -> valid Value, type: 
+  'scale' -> valid Value, type: 
+  'input' -> valid Value, type: 
+  '/Relu_output_0' -> valid Value, type: 
+  '/Add_output_0' -> valid Value, type: 
+  '/MatMul_output_0' -> valid Value, type: 
+  'add_const' -> valid Value, type: 
+  'bias' -> valid Value, type: 
+  '/Mul_output_0' -> valid Value, type: 
+  'weight' -> valid Value, type: 
+  'scale' -> valid Value, type: 
+  'input' -> valid Value, type: 
+  'output' -> valid Value, type: 
+  '/Relu_output_0' -> valid Value, type: 
+  '/Add_output_0' -> valid Value, type: 
+  '/MatMul_output_0' -> valid Value, type: 
+  'add_const' -> valid Value, type: 
+  'bias' -> valid Value, type: 
+  '/Mul_output_0' -> valid Value, type: 
+  'weight' -> valid Value, type: 
+  'scale' -> valid Value, type: 
+  'input' -> valid Value, type: 

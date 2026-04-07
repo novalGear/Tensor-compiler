@@ -2,6 +2,8 @@
 #include "TypeConverter.hpp"
 #include <iostream>
 
+#include "plog/Log.h"
+
 namespace tcc {
 namespace mlir_gen {
 
@@ -21,7 +23,7 @@ mlir::Type TypeConverter::getElementType() const {
 }
 
 bool TypeConverter::isDynamicDim(int64_t dim) {
-    std::cout << "isDynamicDim called with dim=" << dim
+    PLOG_DEBUG << "isDynamicDim called with dim=" << dim
               << ", kDynamic=" << mlir::ShapedType::kDynamic << "\n";
     return dim == mlir::ShapedType::kDynamic;
 }

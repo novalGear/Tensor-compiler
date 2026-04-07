@@ -4,6 +4,8 @@
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
 #include "mlir/IR/AffineMap.h"
 
+#include "plog/Log.h"
+
 #include <iostream>
 
 namespace tcc {
@@ -13,8 +15,8 @@ mlir::Value AddEmitter::emit(const std::vector<mlir::Value>& inputs,
                               const std::vector<std::string>& outputNames,
                               const std::vector<size_t>& outputDims) {
 
-    std::cout << "[DEBUG] AddEmitter: creating add for " << outputNames[0] << "\n";
-    std::cout << "[DEBUG]   inputs size: " << inputs.size() << "\n";
+    PLOG_DEBUG << "[DEBUG] AddEmitter: creating add for " << outputNames[0] << "\n";
+    PLOG_DEBUG << "[DEBUG]   inputs size: " << inputs.size() << "\n";
     auto loc = mlir::UnknownLoc::get(builder.getContext());
 
     if (inputs.size() != 2) {
@@ -85,7 +87,7 @@ mlir::Value AddEmitter::emit(const std::vector<mlir::Value>& inputs,
     auto result = generic.getResult(0);
     tensorMap[outputNames[0]] = result;
 
-    std::cout << "[DEBUG] AddEmitter: saved " << outputNames[0] << " to tensorMap\n";
+    PLOG_DEBUG << "[DEBUG] AddEmitter: saved " << outputNames[0] << " to tensorMap\n";
 
     return result;
 }

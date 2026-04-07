@@ -92,7 +92,7 @@ void MLIRGenerator::debugPrintTensorMap(const std::string& phase) {
     PLOG_DEBUG << " TensorMap " << phase << " (" << pImpl->tensorMap.size() << " entries):";
     IF_PLOG(plog::debug) {
         for (const auto& [name, val] : pImpl->tensorMap) {
-            std::cout << "  '" << name << "'\n";
+            PLOG_DEBUG << "  '" << name << "'\n";
         }
     }
 }
@@ -101,11 +101,11 @@ void MLIRGenerator::debugPrintNode(size_t nodeId, const ComputeNode& node) {
     std::visit([nodeId](const auto& n) {
         PLOG_DEBUG << " Node " << nodeId;
         IF_PLOG(plog::debug) {
-            std::cout << "  Inputs: ";
-            for (const auto& in : n.input_tensors) std::cout << "'" << in << "' ";
-            std::cout << "\n  Outputs: ";
-            for (const auto& out : n.output_tensors) std::cout << "'" << out << "' ";
-            std::cout << "\n";
+            PLOG_DEBUG << "  Inputs: ";
+            for (const auto& in : n.input_tensors) PLOG_DEBUG << "'" << in << "' ";
+            PLOG_DEBUG << "\n  Outputs: ";
+            for (const auto& out : n.output_tensors) PLOG_DEBUG << "'" << out << "' ";
+            PLOG_DEBUG << "\n";
         }
     }, node);
 }
@@ -237,7 +237,7 @@ bool MLIRGenerator::emitNode(const ComputeGraph& graph, size_t nodeId, const Com
             pImpl->mulEmitter->emit(inputs, n.output_tensors, outputDims);
         }
         else if constexpr (std::is_same_v<T, ReluNode>) {
-            PLOG_DEBUG << " Emitting ReluNode\n";
+            PLOG_DEBUG << " Emitting ReluNode";
             if (inputs.size() != 1) {
                 PLOG_ERROR << "ReluNode requires 1 input, got " << inputs.size();
                 return false;
@@ -245,12 +245,13 @@ bool MLIRGenerator::emitNode(const ComputeGraph& graph, size_t nodeId, const Com
             pImpl->reluEmitter->emit(inputs, n.output_tensors, outputDims);
         }
         else if constexpr (std::is_same_v<T, MatmulNode>) {
-            PLOG_DEBUG << " Emitting MatmulNode\n";
+            PLOG_DEBUG << " Emitting MatmulNode";
             if (inputs.size() != 2) {
                 PLOG_ERROR << "MatmulNode requires 2 inputs, got " << inputs.size();
                 return false;
             }
             pImpl->matmulEmitter->emit(inputs, n.output_tensors, outputDims);
+            PLOG_DEBUG << " Emitting MatmulNode";
         }
         else {
             PLOG_ERROR << " Unsupported node type";
@@ -274,12 +275,13 @@ bool MLIRGenerator::generate(const ComputeGraph& graph) {
         PLOG_ERROR << " Failed to create main function";
         return false;
     }
+    printTensorMap();
 
     auto order = graph.topologicalSort(false);
     IF_PLOG(plog::debug) {
         PLOG_DEBUG << " Topological order: ";
-        for (auto id : order) std::cout << id << " ";
-        std::cout << "\n\n";
+        for (auto id : order) PLOG_DEBUG << id << " ";
+        PLOG_DEBUG << "\n\n";
     }
 
     for (size_t nodeId : order) {
@@ -287,7 +289,7 @@ bool MLIRGenerator::generate(const ComputeGraph& graph) {
             PLOG_ERROR << " Failed to emit node " << nodeId;
             return false;
         }
-        debugPrintTensorMap("after node " + std::to_string(nodeId));
+        printTensorMap();
     }
 
     auto outputs = graph.collectOutputs();
@@ -336,6 +338,28 @@ bool MLIRGenerator::saveMLIRToFile(const std::string& filename) {
     os.close();
     PLOG_INFO << "MLIR saved to: " << filename;
     return true;
+}
+
+void MLIRGenerator::printTensorMap() const {
+    PLOG_DEBUG << "\n========== TENSOR MAP ==========\n";
+    IF_PLOG(plog::debug) {
+        for (const auto& [name, value] : pImpl->tensorMap) {
+            std::cout << "  '" << name << "' -> ";
+            if (value) {
+                std::cout << "valid Value";
+                if (value.getType()) {
+                    std::cout << ", type: ";
+                    value.getType().dump();
+                } else {
+                    std::cout << ", type: null";
+                }
+            } else {
+                std::cout << "nullptr";
+            }
+            std::cout << "\n";
+        }
+        PLOG_DEBUG << "================================\n\n";
+    }
 }
 
 } // namespace mlir_gen

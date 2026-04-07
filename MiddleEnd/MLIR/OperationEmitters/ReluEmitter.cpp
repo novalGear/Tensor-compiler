@@ -5,6 +5,9 @@
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
 #include "mlir/IR/AffineMap.h"
 
+
+#include "plog/Log.h"
+
 namespace tcc {
 namespace mlir_gen {
 
