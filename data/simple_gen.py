@@ -24,21 +24,21 @@ class SimpleTestNet(nn.Module):
             requires_grad=False
         )
 
-        # Константа 2: bias для Add (5)
+        # Константа 2: bias для Add (1x5)
         self.bias = nn.Parameter(
-            torch.ones(5) * 0.5,
+            torch.ones(1, 5) * 0.5,
             requires_grad=False
         )
 
-        # Константа 3: scale для Mul (5)
+        # Константа 3: scale для Mul (1x5)
         self.scale = nn.Parameter(
-            torch.ones(5) * 2.0,
+            torch.ones(1, 5) * 2.0,
             requires_grad=False
         )
 
         # Константа 4: дополнительный тензор для второго Add
         self.add_const = nn.Parameter(
-            torch.ones(5) * 1.0,
+            torch.ones(1, 5) * 1.0,
             requires_grad=False
         )
 

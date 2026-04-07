@@ -98,6 +98,14 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+
+    if (cfg.printMLIR) {
+        generator.printMLIRToStream(std::cout);
+    }
+    if (cfg.outputFile != "") {
+        generator.saveMLIRToFile(cfg.outputFile);
+    }
+    
     PLOG_INFO << "MLIR generation successful!\n";
 
     return 0;

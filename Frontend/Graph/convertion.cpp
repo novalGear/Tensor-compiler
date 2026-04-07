@@ -6,14 +6,16 @@
 #include <algorithm>
 #include <optional>
 
+#include "plog/Log.h"
+
 namespace tcc {
 
 std::unique_ptr<ComputeGraph> ComputeGraph::load_from_onnx(const std::string& filepath) {
     onnx::ModelProto model;
-    std::cout << "[Info] Loading ONNX model from: " << filepath << std::endl;
+    PLOG_INFO << " Loading ONNX model from: " << filepath << std::endl;
 
     if (!read_from_onnx_proto(filepath, model)) {
-        std::cerr << "[Error] Failed to read ONNX file." << std::endl;
+        PLOG_ERROR << " Failed to read ONNX file." << std::endl;
         return nullptr;
     }
     return convertion(model);
@@ -23,13 +25,12 @@ bool ComputeGraph::read_from_onnx_proto(const std::string& filepath, onnx::Model
     std::ifstream file(filepath, std::ios::binary);
 
     if (!file.is_open()) {
-        std::cerr << "[Error] Failed to open file: " << filepath << std::endl;
+        PLOG_ERROR << " Failed to open file: " << filepath;
         return false;
     }
     // ParseFromIstream возвращает true при успехе, false при ошибке формата
     if (!model_out.ParseFromIstream(&file)) {
-        std::cerr   << "[Error] Failed to parse ONNX model. File might be corrupted or invalid."
-                    << std::endl;
+        PLOG_ERROR  << " Failed to parse ONNX model. File might be corrupted or invalid.";
         return false;
     }
     return true;
@@ -195,8 +196,8 @@ std::vector<float> ComputeGraph::extractInitializerData(const onnx::TensorProto&
     }
     result.resize(total_size, 0.0f);
 
-    std::cerr << "[Warning] No data found in initializer: " << initializer.name()
-              << ", filling with zeros" << std::endl;
+    PLOG_WARNING << "[Warning] No data found in initializer: " << initializer.name()
+              << ", filling with zeros";
 
     return result;
 }
@@ -231,8 +232,8 @@ void ComputeGraph::create_constant_nodes_from_initializers(const onnx::GraphProt
         auto it = tensor_descr_map.find(tensor_name);
         if (it != tensor_descr_map.end() && it->second.producer_node_id != NO_PRODUCER) {
             // Уже есть producer (например, это выход какой-то операции)
-            std::cout << "[Info] Tensor " << tensor_name
-                      << " already has producer, skipping constant creation" << std::endl;
+            PLOG_INFO << " Tensor " << tensor_name
+                      << " already has producer, skipping constant creation";
             continue;
         }
 
@@ -241,8 +242,8 @@ void ComputeGraph::create_constant_nodes_from_initializers(const onnx::GraphProt
         NodeID node_id = addNode(std::move(const_node));
         updateTensorMapForConstant(tensor_name, node_id, init);
 
-        std::cout << "[Info] Created ConstantNode for: " << tensor_name
-                  << " (size: " << data.size() << ", node_id: " << node_id << ")" << std::endl;
+        PLOG_INFO << "Created ConstantNode for: " << tensor_name
+                  << " (size: " << data.size() << ", node_id: " << node_id << ")";
     }
 }
 
@@ -280,7 +281,7 @@ std::vector<size_t> ComputeGraph::broadcastDims(const std::vector<size_t>& a, co
         if (dimA == dimB || dimA == 1 || dimB == 1) {
             result[rank - 1 - i] = std::max(dimA, dimB);
         } else {
-            std::cerr << "[ERROR] Cannot broadcast dimensions " << dimA << " and " << dimB << "\n";
+            PLOG_ERROR << "Cannot broadcast dimensions " << dimA << " and " << dimB;
             return {};
         }
     }
@@ -297,7 +298,7 @@ void ComputeGraph::inferMatMulShape(const MatmulNode& node, const TensorID& outp
     auto rhsDims = getTensorDims(node.input_tensors[1]);
 
     if (lhsDims.size() < 2 || rhsDims.size() < 2) {
-        std::cerr << "[ERROR] MatMul requires at least 2D inputs\n";
+        PLOG_ERROR << " MatMul requires at least 2D inputs";
         return;
     }
 
@@ -313,7 +314,7 @@ void ComputeGraph::inferMatMulShape(const MatmulNode& node, const TensorID& outp
             if (lhsDims[i] == rhsDims[i] || lhsDims[i] == 1 || rhsDims[i] == 1) {
                 outDims.insert(outDims.begin(), std::max(lhsDims[i], rhsDims[i]));
             } else {
-                std::cerr << "[ERROR] Batch dimension mismatch in MatMul\n";
+                PLOG_ERROR << " Batch dimension mismatch in MatMul";
                 return;
             }
         } else {
@@ -363,7 +364,7 @@ void ComputeGraph::inferGemmShape(const GemmNode& node, const TensorID& outputTe
     auto bDims = getTensorDims(node.input_tensors[1]);
 
     if (aDims.size() < 2 || bDims.size() < 2) {
-        std::cerr << "[ERROR] Gemm requires at least 2D inputs\n";
+        PLOG_ERROR << " Gemm requires at least 2D inputs\n";
         return;
     }
 
@@ -386,7 +387,7 @@ void ComputeGraph::inferConvShape(const ConvNode& node, const TensorID& outputTe
     auto weightDims = getTensorDims(node.input_tensors[1]);
 
     if (inputDims.size() != 4 || weightDims.size() != 4) {
-        std::cerr << "[ERROR] Conv requires 4D inputs (NCHW)\n";
+        PLOG_ERROR << " Conv requires 4D inputs (NCHW)\n";
         return;
     }
 

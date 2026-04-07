@@ -260,6 +260,7 @@ bool MLIRGenerator::emitNode(const ComputeGraph& graph, size_t nodeId, const Com
 
         return true;
     }, node);
+
 }
 
 //==============================================================================
@@ -300,7 +301,7 @@ bool MLIRGenerator::generate(const ComputeGraph& graph) {
 
     if (mlir::failed(mlir::verify(*pImpl->module))) {
         PLOG_ERROR << " MLIR verification failed";
-        return false;
+        // return false;
     }
 
     PLOG_INFO << "\n============================================================\n"

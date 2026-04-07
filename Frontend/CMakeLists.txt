@@ -82,6 +82,7 @@ target_include_directories(onnx_proto_lib PUBLIC
 
 target_link_libraries(onnx_proto_lib PUBLIC
     ${Protobuf_LIBRARIES}
+    plog::plog
 )
 
 # Добавляем зависимость от генерации proto
