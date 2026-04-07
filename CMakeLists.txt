@@ -6,8 +6,16 @@ project(TensorCompiler
   VERSION 0.1
 )
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# ================================================================
+# Plog debugging library
+# ================================================================
+
+add_subdirectory(3rd-party/plog)
 
 # ================================================================
 # Автоматический поиск LLVM/MLIR в WSL типовых путях
@@ -82,4 +90,5 @@ target_link_libraries(tcc_driver
     ${MLIR_LIBS}
     ${LLVM_LIBS}
     ${PROTOBUF_LIBRARIES}
+    plog::plog
 )

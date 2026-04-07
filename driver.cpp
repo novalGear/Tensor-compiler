@@ -6,6 +6,10 @@
 #include <cstring>
 #include <memory>
 
+#include <plog/Log.h>
+#include <plog/Formatters/TxtFormatter.h>
+#include <plog/Initializers/ConsoleInitializer.h>
+
 void printUsage(const char* progName) {
     std::cout << "Usage: " << progName << " <input.onnx> [options]\n\n"
               << "Options:\n"
@@ -59,6 +63,8 @@ Options parseArgs(int argc, char** argv) {
 }
 
 int main(int argc, char** argv) {
+    plog::init<plog::TxtFormatter>(plog::debug, plog::streamStdErr);
+
     auto opts = parseArgs(argc, argv);
 
     if (opts.help || opts.inputFile.empty()) {
@@ -66,12 +72,12 @@ int main(int argc, char** argv) {
         return opts.help ? 0 : 1;
     }
 
-    std::cout << "Loading ONNX model: " << opts.inputFile << "\n";
+    PLOG_INFO << "Loading ONNX model: " << opts.inputFile << "\n";
 
     // Загрузка графа из ONNX
     auto graph = tcc::ComputeGraph::load_from_onnx(opts.inputFile);
     if (!graph) {
-        std::cerr << "Error: Failed to load ONNX model\n";
+        PLOG_ERROR << "Error: Failed to load ONNX model\n";
         return 1;
     }
 
@@ -88,11 +94,11 @@ int main(int argc, char** argv) {
     // Генерация MLIR
     tcc::mlir_gen::MLIRGenerator generator(cfg);
     if (!generator.generate(*graph)) {
-        std::cerr << "Error: MLIR generation failed\n";
+        PLOG_ERROR << "Error: MLIR generation failed\n";
         return 1;
     }
 
-    std::cout << "MLIR generation successful!\n";
+    PLOG_INFO << "MLIR generation successful!\n";
 
     return 0;
 }

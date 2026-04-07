@@ -21,7 +21,7 @@ inline std::string get_node_color(const std::string& op_type) {
     else if (op_type == "Constant") return "#FAFAFA";
     else if (op_type == "Add") return "#E3F2FD";
     else if (op_type == "Mul") return "#E8F5E9";
-    else if (op_type == "Relu") return "#FFFFFF";
+    else if (op_type == "Relu") return "#FFF3E0";
     else if (op_type == "MatMul") return "#F3E5F5";
     else if (op_type == "Gemm") return "#EFEBE9";
     else if (op_type == "Conv") return "#E0F7FA";

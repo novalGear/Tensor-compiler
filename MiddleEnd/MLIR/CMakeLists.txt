@@ -30,4 +30,5 @@ target_link_libraries(tcc_mlir
     MLIRTensorDialect
     MLIRPass
     LLVMSupport
+    plog::plog
 )
