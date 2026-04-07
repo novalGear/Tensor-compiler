@@ -18,5 +18,12 @@ target_link_libraries(tcc_pipeline
     MLIRSCFToControlFlow
     MLIRTensorToLinalg
     MLIRReconcileUnrealizedCasts
+    MLIRLLVMDialect            
+    MLIRTargetLLVMIRExport     
+    MLIRTransforms             
+    MLIRMemRefDialect
+    MLIRMemRefToLLVM
+    MLIRLinalgTransforms       
+    
     LLVMSupport
 )

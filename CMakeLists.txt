@@ -87,6 +87,7 @@ target_link_libraries(tcc_driver
     PRIVATE
     tcc_frontend
     tcc_middleend
+    tcc_pipeline
     ${MLIR_LIBS}
     ${LLVM_LIBS}
     ${PROTOBUF_LIBRARIES}

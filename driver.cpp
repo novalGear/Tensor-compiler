@@ -1,6 +1,8 @@
 // driver.cpp
 #include "graph.hpp"
 #include "MiddleEnd/MLIR/MLIRGenerator.hpp"
+#include "MiddleEnd/Pipeline/MLIRPasses.hpp"
+
 #include <iostream>
 #include <string>
 #include <cstring>
@@ -98,7 +100,6 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-
     if (cfg.printMLIR) {
         generator.printMLIRToStream(std::cout);
     }
@@ -106,7 +107,20 @@ int main(int argc, char** argv) {
         generator.saveMLIRToFile(cfg.outputFile);
     }
     
-    PLOG_INFO << "MLIR generation successful!\n";
+
+    PLOG_INFO << "MLIR generation successful!";
+    /* =========================== LOWERING ================================= */
+
+    auto generated_module = generator.takeModule();
+    tcc::mlir_gen::MLIRPasses lowering_gen;
+
+    if (!lowering_gen.runLoweringPipeline(*generated_module)) {
+        PLOG_ERROR << "MLIR lowering failed";
+        return EXIT_FAILURE;
+    }
+
+    PLOG_INFO << "MLIR lowering succesful!";
+
 
     return 0;
 }
