@@ -127,13 +127,15 @@ COMPUTE GRAPH DIAGNOSTICS
   Node 8: name='add_const_const', type=Constant, inputs: [], outputs: [add_const], value_size: 5
 
 ============================================================
+
+============================================================
+MLIR GENERATION START
+============================================================
+
 [DEBUG] === createMainFunction START ===
-[DEBUG] collectInputs returned 1 inputs
-[DEBUG]   Input: 'input'
-[DEBUG] Adding inputs to tensorMap:
-[DEBUG]   tensorMap['input'] = argument 0
-[DEBUG] tensorMap now has 1 entries
-[DEBUG]   tensorMap contains: 'input'
+[DEBUG]   Mapped input: 'input' -> arg0
+[DEBUG] TensorMap after inputs (1 entries):
+  'input'
 
 ============================================================
 TOPOLOGICAL SORT DEBUG
@@ -166,47 +168,47 @@ Node  8 [Const] (inDegree=0): -> 4
 Unsupported rank for MatMul: 0
 
 === Kahn's Algorithm (BFS Topological Sort) ===
-Initial queue (nodes with inDegree=0): 5[Const] 6[Const] 7[Const] 8[Const] 
+Initial queue (nodes with inDegree=0): 5[Const] 6[Const] 7[Const] 8[Const]
 
 Step 1: Pop node 5 [Const]
   Order so far: [5]
-  Processing outgoing edges: 0 (inDegree now 0) → queued 
-  Queue now: 6[Const] 7[Const] 8[Const] 0[MatMul] 
+  Processing outgoing edges: 0 (inDegree now 0) → queued
+  Queue now: 6[Const] 7[Const] 8[Const] 0[MatMul]
 
 Step 2: Pop node 6 [Const]
   Order so far: [5, 6]
-  Processing outgoing edges: 1 (inDegree now 1) 
-  Queue now: 7[Const] 8[Const] 0[MatMul] 
+  Processing outgoing edges: 1 (inDegree now 1)
+  Queue now: 7[Const] 8[Const] 0[MatMul]
 
 Step 3: Pop node 7 [Const]
   Order so far: [5, 6, 7]
-  Processing outgoing edges: 3 (inDegree now 1) 
-  Queue now: 8[Const] 0[MatMul] 
+  Processing outgoing edges: 3 (inDegree now 1)
+  Queue now: 8[Const] 0[MatMul]
 
 Step 4: Pop node 8 [Const]
   Order so far: [5, 6, 7, 8]
-  Processing outgoing edges: 4 (inDegree now 1) 
-  Queue now: 0[MatMul] 
+  Processing outgoing edges: 4 (inDegree now 1)
+  Queue now: 0[MatMul]
 
 Step 5: Pop node 0 [MatMul]
   Order so far: [5, 6, 7, 8, 0]
-  Processing outgoing edges: 1 (inDegree now 0) → queued 
-  Queue now: 1[Add] 
+  Processing outgoing edges: 1 (inDegree now 0) → queued
+  Queue now: 1[Add]
 
 Step 6: Pop node 1 [Add]
   Order so far: [5, 6, 7, 8, 0, 1]
-  Processing outgoing edges: 2 (inDegree now 0) → queued 
-  Queue now: 2[Relu] 
+  Processing outgoing edges: 2 (inDegree now 0) → queued
+  Queue now: 2[Relu]
 
 Step 7: Pop node 2 [Relu]
   Order so far: [5, 6, 7, 8, 0, 1, 2]
-  Processing outgoing edges: 3 (inDegree now 0) → queued 
-  Queue now: 3[Mul] 
+  Processing outgoing edges: 3 (inDegree now 0) → queued
+  Queue now: 3[Mul]
 
 Step 8: Pop node 3 [Mul]
   Order so far: [5, 6, 7, 8, 0, 1, 2, 3]
-  Processing outgoing edges: 4 (inDegree now 0) → queued 
-  Queue now: 4[Add] 
+  Processing outgoing edges: 4 (inDegree now 0) → queued
+  Queue now: 4[Add]
 
 Step 9: Pop node 4 [Add]
   Order so far: [5, 6, 7, 8, 0, 1, 2, 3, 4]
@@ -216,18 +218,73 @@ Step 9: Pop node 4 [Add]
 [5[Const] → 6[Const] → 7[Const] → 8[Const] → 0[MatMul] → 1[Add] → 2[Relu] → 3[Mul] → 4[Add]]
 ============================================================
 
+[DEBUG] Topological order: 5 6 7 8 0 1 2 3 4
+
+[DEBUG] Node 5
+  Inputs:
+  Outputs: 'weight'
 [DEBUG] Emitting ConstantNode
 [DEBUG] ConstantEmitter: creating constant for weight
 [DEBUG] ConstantEmitter: saved weight to tensorMap
+[DEBUG] TensorMap after node 5 (2 entries):
+  'weight'
+  'input'
+[DEBUG] Node 6
+  Inputs:
+  Outputs: 'bias'
 [DEBUG] Emitting ConstantNode
 [DEBUG] ConstantEmitter: creating constant for bias
 [DEBUG] ConstantEmitter: saved bias to tensorMap
+[DEBUG] TensorMap after node 6 (3 entries):
+  'bias'
+  'weight'
+  'input'
+[DEBUG] Node 7
+  Inputs:
+  Outputs: 'scale'
 [DEBUG] Emitting ConstantNode
 [DEBUG] ConstantEmitter: creating constant for scale
 [DEBUG] ConstantEmitter: saved scale to tensorMap
+[DEBUG] TensorMap after node 7 (4 entries):
+  'bias'
+  'weight'
+  'scale'
+  'input'
+[DEBUG] Node 8
+  Inputs:
+  Outputs: 'add_const'
 [DEBUG] Emitting ConstantNode
 [DEBUG] ConstantEmitter: creating constant for add_const
 [DEBUG] ConstantEmitter: saved add_const to tensorMap
+[DEBUG] TensorMap after node 8 (5 entries):
+  'add_const'
+  'bias'
+  'weight'
+  'scale'
+  'input'
+
+[DEBUG] Node 0
+  Inputs: 'input' 'weight'
+  Outputs: '/MatMul_output_0'
+
+
 [DEBUG] Emitting MatmulNode
-Error: Input tensor /MatMul_output_0 not found
+[DEBUG] TensorMap after node 0 (5 entries):
+  'add_const'
+  'bias'
+  'weight'
+  'scale'
+  'input'
+
+[DEBUG] Node 1
+  Inputs: '/MatMul_output_0' 'bias'
+  Outputs: '/Add_output_0'
+[ERROR] Input tensor '/MatMul_output_0' not found in tensorMap
+[DEBUG] TensorMap before error (5 entries):
+  'add_const'
+  'bias'
+  'weight'
+  'scale'
+  'input'
+[ERROR] Failed to emit node 1
 Error: MLIR generation failed
